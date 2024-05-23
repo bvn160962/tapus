@@ -1,0 +1,56 @@
+
+
+table {
+    border-collapse: separate;
+    border-spacing: 0px 2px;    /* Исключаем горизонтальные отступы, создаем вертикальные */
+}
+
+/*** Для текста Проекты в заголовке таблицы
+*/
+.a-prj-head {
+    display: inline-block;
+    width: var(--prj-head-width);
+}
+
+/*** Для текста названий атрибутов
+*/
+.a-head {
+    color: black;
+    color: var(--def-color);
+    font-weight: bold;
+}
+
+/*** Для ячеек в заголовке таблицы
+*/
+.td-header {
+    background-color: #C0C0C0;
+    font-weight: bold;
+    width: var(--btn-width);
+}
+
+/*** Ячейка заголовка таблицы с границами сверху и снизу
+*/
+.td-header-borders {
+    border-bottom: 2px solid gray;
+    border-top: 2px solid gray;
+}
+
+/*** Ячейка в таблице с нижней границей (таблица пользователей)
+*/
+.td-table-border {
+    border-bottom: 1px solid gray;
+}
+
+/*** Для ячейки выбранной кнопки в таблице
+*/
+.td-selected {
+    border: 3px solid #0000FF;
+}
+
+/* Ячейка с кнопками (Users Info)
+*/
+.td-buttons {
+    border-left: 3px solid gray;
+    border-right: 0px solid gray;
+}
+

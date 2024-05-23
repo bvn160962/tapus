@@ -1,0 +1,108 @@
+
+/* Глобальные переменные - для всех стилей
+*/
+:root {
+    --btn-width: 50px;
+    --prj-head-width: 300px;
+    --def-color: #008B8B; /* S:#008B8B,  #00008B;*/
+    --def-background: #E8F0FE; /* #F0FFF0 */
+    --inp-height: 25px;
+    --border-color: gray;
+}
+
+/* Задает минимальную ширину страницы (не работает!!!)
+
+html, body
+{
+   min-width: 880px;
+   display: inline-block;
+}*/
+
+/***  Для всех p
+*/
+p {
+/*    min-width: 970px;*/
+    width: 100%;
+    display: inline-block;
+    margin-block: 2px;
+}
+
+/*** Для всех полей со списком
+*/
+select {
+    background-color: var(--def-background);
+    max-width:200px;
+    height: var(--inp-height);
+    border: 2px solid gray;
+}
+
+/*** Для p в заголовке приложения
+*/
+.head_style {
+    border: 2px solid grey;
+    border-radius: 15px;
+    background-color: #E0FFFF;
+    color: var(--def-color);
+    line-height: 28px;
+    font-weight: bold;
+
+    /*font-style:oblique;*/
+    /*vertical-align: bottom;*/
+    /*text-align:center;*/
+}
+
+/* Для фиксированной вверху области (в заголовке приложения)
+*/
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+}
+
+/* Прижимает вправо
+*/
+.right{
+    float:right;
+/*    margin:3px;*/
+}
+
+/* Стиль рамки логина
+*/
+.center_frame {
+    text-align: center;
+    font-family: Arial;
+    /*border: 8px #CCCCCC ridge;*/
+    border: 10px solid rgba(95, 95, 95, .3);
+    border-radius: 3px;
+    margin: 0 auto;
+    height: 250px;
+    width: 200px;
+    padding: 5px;
+    position: absolute;
+    top:  50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
+/* Задаём размер картинки
+*/
+.fit-picture {
+    width: 100px;
+}
+
+/*  Позиция диалога подтверждения
+*/
+.dial-pos {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  margin-top: 100px;
+  margin-left: 200px;
+}
+
+/* Центрирование
+*/
+.center {
+  display: flex;
+  justify-content: center;
+}

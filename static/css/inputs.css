@@ -1,0 +1,35 @@
+
+
+/*** Для всех полей ввода
+*/
+input {
+    background-color: var(--def-background);
+    height: var(--inp-height);
+    border: 2px solid gray;
+}
+
+/* Для полей ввода с нижней границей
+*/
+.input-bottom-border {
+    border: none;
+    border-bottom: 2px solid gray;
+}
+
+/* Для ввода комментариев на вкладке approvement
+*/
+.feedback {
+    width: 350px;
+    max-width: 400px;
+    min-width: 250px;
+    height: 100px;
+    max-height: 200px;
+    min-height: 50px;
+    float: left;
+}
+/* Для обязатедьных атрибутов
+*/
+.required::after {
+    content: '*';
+    color: red;
+}
+

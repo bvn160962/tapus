@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel='stylesheet' type='text/css' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <title>Document</title>
+</head>
+<body>
+    <form name="form_date" action="" method="POST">
+        <input type="week" name="week" value="">
+        <button class="fa fa-calendar"></button>
+    </form>
+
+    <form name="form" action="" method="POST">
+        <p hidden>
+            <input type="text" id="project_id" name="project_id" value="id1">
+            <input type="text" id="entry_id" name="entry_id" value="id2">
+        </p>
+        <p>
+            <label for="hours">Hours:</label>
+            <input type="text" id="hours" name="hours">
+            <label for="note">Note:</label>
+            <input type="text" id="note" name="note">
+
+            <button type="submit" name="btn_submit" value="submit">Submit</button>
+            <button type="reset" name="btn_reset" value="clear">Clear</button>
+            <!--button type="button" name="btn_submit" formaction="/upload/">Submit</button-->
+        </p>
+        <p>
+            <table>
+               <tr>
+                <td>
+                    <button type="submit" name="btn_c11_name" value="1_1">6</button>
+                </td>
+                <td>
+                    <button type="submit" name="btn_c12_name" value="1_2">12</button>
+                </td>
+               </tr>
+             </table>
+        </p>
+    </form>
+</body>
+</html>
