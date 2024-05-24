@@ -758,8 +758,13 @@ def agreed(values):
                 msg = values[key]
             elif values[key] == 'on':
                 tsh_id_list.append(int(key))
-        data_module.update_status(tuple(tsh_id_list), True, msg)
-        return ui_module.create_approvement_html()
+
+        if tsh_id_list == []:
+            error_msg = 'Не выбрано ни одной записи на согласование'
+            return app.response(error_msg, settings.M_APPROVEMENT)
+        else:
+            data_module.update_status(tuple(tsh_id_list), True, msg)
+            return ui_module.create_approvement_html()
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_APPROVEMENT)
@@ -775,8 +780,13 @@ def rejected(values):
                 msg = values[key]
             elif values[key] == 'on':
                 tsh_id_list.append(int(key))
-        data_module.update_status(tuple(tsh_id_list), False, msg)
-        return ui_module.create_approvement_html()
+
+        if tsh_id_list == []:
+            error_msg = 'Не выбрано ни одной записи на отклонение'
+            return app.response(error_msg, settings.M_APPROVEMENT)
+        else:
+            data_module.update_status(tuple(tsh_id_list), False, msg)
+            return ui_module.create_approvement_html()
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_APPROVEMENT)

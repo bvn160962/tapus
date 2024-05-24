@@ -168,6 +168,7 @@ def login(module):
 #
 # TIMESHEETS
 #
+@application.route('/', methods=['GET', 'POST'])
 @application.route(settings.MODULES[settings.M_TIMESHEETS][settings.M_URL], methods=['GET', 'POST'])
 def timesheets():
     try:
