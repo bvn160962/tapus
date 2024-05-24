@@ -121,7 +121,6 @@ def check_password(values):
 def logoff(module):
     # util.log_debug(f'Logoff')
     glob_module.dec_session_count()
-    # app.new_session()
 
     return redirect(url_for(settings.M_LOGIN, module=module))
 
@@ -165,7 +164,6 @@ def debug(module):
         s_list.append(('DB_TR_STATUS', str(pg_module.DB_CONNECT.get_transaction_status())))
         s_list.append(('*** DB PARAMETERS ***', ''))
         s_list.append(('LOGIN_COUNT', str(data_module.get_session_count())))
-
 
     return ui_module.create_info_html(settings.INFO_TYPE_INFORMATION, s_list, module, title)
 
@@ -313,14 +311,13 @@ def timesheets_delete(tsh_id):
 def timesheets_get():
     return ui_module.create_timesheet_html()
 
+
 # POST
 #
 def timesheets_post(values):
     html = ''
 
     for value in values:
-        # util.log_error(f'values={values}')
-
         # Нажата кнопка LOGOFF
         #
         if value == settings.LOGOFF_BUTTON:
@@ -394,7 +391,6 @@ def timesheets_post(values):
         if value == settings.WEEK_BUTTON_PREV:
             html = prev_week()
 
-    # util.log_debug(f'timesheets.POST: Не задан обработчик кнопки {value}')
     return html
 
 
@@ -406,14 +402,17 @@ def projects_delete(prj_id):
         data_module.delete_project(prj_id)
         return ui_module.create_projects_html(())
     except Exception as ex:
-        return ui_module.create_info_html(settings.INFO_TYPE_ERROR, f'{ex}', settings.M_PROJECTS)
+        return app.response(f'{ex}', settings.M_PROJECTS)
 
 
 def projects_not_delete(prj_id):
-    props = data_module.get_project_by_id_list(prj_id)
-    m_props = (str(props[0]), str(props[1]), str(props[2]), str(props[3]), str(props[4]), str(props[5]))
+    try:
+        props = data_module.get_project_by_id_list(prj_id)
+        m_props = (str(props[0]), str(props[1]), str(props[2]), str(props[3]), str(props[4]), str(props[5]))
 
-    return ui_module.create_projects_html(m_props)
+        return ui_module.create_projects_html(m_props)
+    except Exception as ex:
+        return app.response(f'{ex}', settings.M_PROJECTS)
 
 
 def projects_update():
@@ -421,9 +420,8 @@ def projects_update():
         # util.log_debug(f'Нажата кнопка Update Projects')
         util.update()
         return ui_module.create_projects_html()
-
     except Exception as ex:
-        return ui_module.create_info_html(settings.INFO_TYPE_ERROR, f'{ex}', settings.M_PROJECTS)
+        return app.response(f'{ex}', settings.M_PROJECTS)
 
 
 def projects_select(prj_id):
@@ -434,13 +432,11 @@ def projects_select(prj_id):
 
         return ui_module.create_projects_html(prj_props)
     except Exception as ex:
-        return ui_module.create_info_html(settings.INFO_TYPE_ERROR, f'{ex}', settings.M_PROJECTS)
+        return app.response(f'{ex}', settings.M_PROJECTS)
 
 
 def projects_save(prj_id, props):
     try:
-        # util.log_debug(f'Нажата кнопка Save Project for prj_id={prj_id}, props={props}')
-
         # Сформировать список свойств проекта
         #
         p_name, p_manager_id, p_s_date, p_e_date, p_org = '', '', '', '', ''
@@ -460,19 +456,16 @@ def projects_save(prj_id, props):
             if props[p] == 'on':
                 team_list.append(p)
 
-        # util.log_debug(f'team_list={len(team_list)}')
         if p_manager_id == '':  # Список ролей disabled
             p_manager_id = app.get_c_prop(settings.C_USER_ID)
 
-        prj_props = (prj_id, p_manager_id, p_name, p_s_date, p_e_date, p_org)
+        # prj_props = (prj_id, p_manager_id, p_name, p_s_date, p_e_date, p_org)
         prj_props_db = (prj_id, p_manager_id, p_name, None if p_s_date == '' else p_s_date, None if p_e_date == '' else p_e_date, p_org)
-        # util.log_debug(f'prj_props={prj_props}')
-        # util.log_debug(f'prj_props_db={prj_props_db}')
 
         # Проверка переданных атрибутов
         if p_name == '':
-            msg = 'Не заполнено одно из обязательных атрибутов:  Наименование проекта!'
-            return ui_module.create_info_html(settings.INFO_TYPE_ERROR, msg, settings.M_PROJECTS)
+            msg = 'Атрибут "Название проекта" должен быть заполнен!'
+            return app.response(msg, settings.M_PROJECTS)
 
         if prj_id == '':  # Создать нового пользователя
             util.log_debug('Insert')
@@ -484,7 +477,7 @@ def projects_save(prj_id, props):
         return ui_module.create_projects_html(())
 
     except Exception as ex:
-        return ui_module.create_info_html(settings.INFO_TYPE_ERROR, f'{ex}', settings.M_PROJECTS)
+        return app.response(f'{ex}', settings.M_PROJECTS)
 
 
 def projects_new_button():

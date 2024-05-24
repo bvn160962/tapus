@@ -55,6 +55,20 @@ def print_cache():
         util.log_info(f' .. {k}={session.get(k)}')
 
 
+def create_module_html(module, err_msg=''):
+    if module == settings.M_APPROVEMENT:
+        return ui_module.create_approvement_html(err_message=err_msg)
+
+    if module == settings.M_TIMESHEETS:
+        return ui_module.create_timesheet_html(err_message=err_msg)
+
+    if module == settings.M_USERS:
+        return ui_module.create_users_html(err_message=err_msg)
+
+    if module == settings.M_PROJECTS:
+        return ui_module.create_projects_html(err_message=err_msg)
+
+
 def response(msg='', module='', msg_type=settings.INFO_TYPE_ERROR):
 
     if util.use_message_dialog():  # Сообщение в виде модального окна
@@ -62,15 +76,7 @@ def response(msg='', module='', msg_type=settings.INFO_TYPE_ERROR):
         if module == '':  # Сообщение в виде отдельного HTML
             return ui_module.create_info_html(msg_type, msg)
 
-        if module == settings.M_APPROVEMENT:
-            resp = make_response(ui_module.create_approvement_html(err_message=msg))
-
-        if module == settings.M_TIMESHEETS:
-            resp = make_response(ui_module.create_timesheet_html(err_message=msg))
-
-        if module == settings.M_USERS:
-            resp = make_response(ui_module.create_users_html(err_message=msg))
-
+        resp = make_response(create_module_html(module, msg))
         if msg != '':
             resp.set_cookie(settings.COOKIE_SHOW_MESSAGE, 'Yes')
 
@@ -109,7 +115,6 @@ def close():
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
-        return ui_module.create_info_html(settings.INFO_TYPE_ERROR, f'{ex}')
 
 
 #
@@ -162,7 +167,7 @@ def login(module):
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
-        return ui_module.create_info_html(settings.INFO_TYPE_ERROR, f'{ex}', module)
+        return response(f'{ex}', module)
 
 
 #
@@ -223,16 +228,12 @@ def timesheets():
             html = app.timesheets_post(values)
 
         # return html #'nothing', 204
-        # util.log_tmp(f'isResponse: {isinstance(html, Response)}')
-        # resp = make_response(html)
-        # resp.set_cookie(settings.COOKIE_SHOW_MESSAGE, 'Текст сообщения')
-        # return resp
         return html
 
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
-        return ui_module.create_info_html(msg=str(ex), module=settings.M_TIMESHEETS, i_type=settings.INFO_TYPE_ERROR)
+        return response(f'{ex}', settings.M_TIMESHEETS)
 
 
 #
@@ -272,7 +273,7 @@ def projects():
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
-        return ui_module.create_info_html(msg=str(ex), module=settings.M_PROJECTS, i_type=settings.INFO_TYPE_ERROR)
+        return response(f'{ex}', settings.M_PROJECTS)
 
 
 #
@@ -310,7 +311,7 @@ def approvement():
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
-        return ui_module.create_info_html(msg=str(ex), module=settings.M_APPROVEMENT, i_type=settings.INFO_TYPE_ERROR)
+        return response(f'{ex}', settings.M_APPROVEMENT)
 
 
 #
@@ -348,7 +349,7 @@ def users():
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
-        return ui_module.create_info_html(msg=str(ex), module=settings.M_USERS, i_type=settings.INFO_TYPE_ERROR)
+        return response(f'{ex}', settings.M_USERS)
 
 
 #  API: Список записей по имени пользователя

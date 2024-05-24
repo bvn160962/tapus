@@ -1155,7 +1155,7 @@ def add_project_table(table, fields):
         n_row += 1
 
 
-def create_projects_html(prj_props=(), show_info=False):
+def create_projects_html(prj_props=(), show_info=False, err_message=''):
     # util.log_debug('create_projects_html...')
     try:
         p_id = '' if len(prj_props) == 0 or prj_props[0] is None else str(prj_props[0])
@@ -1176,7 +1176,7 @@ def create_projects_html(prj_props=(), show_info=False):
 
         # HTML
         #
-        base_html = BaseHTML('Projects', settings.MODULES[settings.M_PROJECTS])
+        base_html = BaseHTML('Projects', settings.MODULES[settings.M_PROJECTS], err_message)
         form = base_html.get_form()
         p = et.SubElement(form, 'p')
 
