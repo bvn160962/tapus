@@ -1,3 +1,4 @@
+console.log('start...');
 /*
 *  Работа с куками
 */
@@ -98,6 +99,7 @@ if (delete_dialog != null) { // Режим модального диалога �
 *  Показать сообщение, если в cookie есть ключ "showMessage"
 */
 const message_dialog = document.getElementById("message_dialog_id");
+const message_dialog_text = document.getElementById("message_dialog_label_id");
 const closeButton = document.getElementById("message_dialog_ok_btn_id");
 
 
@@ -123,4 +125,32 @@ if (message_dialog != null) {
         document.cookie = 'showMessage=; Max-Age=-1;'; // delete cookie key
     }
 }
+
+/*
+* SOCKETS
+*/
+var socket = io(); /* Достаточно только создать сокет */
+//socket.emit('message', 'Сокет создан');
+//socket.emit('message', {data: 'Сокет создан'});
+
+//socket.on('connect', function() { /* Регистрация действия на событие <connect>*/
+//    console.log('socket connect');
+//    socket.emit('message', {data: 'connected!'});
+//});
+
+socket.on('message', function(msg) { /* Регистрация обработчика на событие <message>*/
+    if (msg.startsWith('show#')) {
+        msg = msg.substring(5);
+        console.log('get message: ' + msg);
+        message_dialog_text.innerHTML = msg
+        message_dialog.showModal();
+    } else {
+        console.log('get message: ' + msg);
+    }
+});
+
+socket.on('test', function() { /* Регистрация обработчика на событие <test>*/
+    console.log('get test message...');
+    socket.emit('test_ok', {'status': 'ok'});
+});
 

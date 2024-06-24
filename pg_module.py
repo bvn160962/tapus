@@ -1,4 +1,3 @@
-import datetime
 import traceback
 
 import psycopg2
@@ -10,9 +9,10 @@ import util_module as util
 
 DB_CONNECT = None
 
-if settings.IS_WINDOWS:
-    # PG_HOST = '192.168.62.71'  # VM office
-    PG_HOST = '192.168.1.219'  # VM home
+if util.IS_WINDOWS:
+    # PG_HOST = '192.168.62.79'  # VM office (Bridge)
+    PG_HOST = '192.168.225.150'  # VM country (NAT)
+    # PG_HOST = '192.168.1.219'  # VM home (Bridge)
     # PG_HOST = '127.0.0.1'    # Docker Desktop
 else:
     PG_HOST = 'localhost'      # Cloud
@@ -20,7 +20,7 @@ else:
 PG_PORT = '5432'
 PG_DATABASE = 'timesheets_db'
 PG_USER = 'timesheets_user'
-PG_PASSWORD = 'infodba'
+
 
 # Создать соединение с БД, если еще не установлено
 #
@@ -31,7 +31,8 @@ def get_connect():
 
         if DB_CONNECT is None:
             util.log_info('DB_Connect...')
-            DB_CONNECT = psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DATABASE, user=PG_USER, password=PG_PASSWORD)
+            DB_CONNECT = psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DATABASE, user=PG_USER)
+            # DB_CONNECT = psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DATABASE, user=PG_USER, password=PG_PASSWORD)
 
         #0 util.log_debug(f'TRANSACTION_STATUS_IDLE={psycopg2.extensions.TRANSACTION_STATUS_IDLE}')
         #1 util.log_debug(f'TRANSACTION_STATUS_ACTIVE={psycopg2.extensions.TRANSACTION_STATUS_ACTIVE}')
@@ -73,10 +74,12 @@ def test_connection():
 
 class Entries:
 
+    SQL_GET_ENTRY_ID = f'Select nextval(\'entry_id\'::regclass) as {settings.F_TSH_ID}'
+
     SQL_GET_ENTRY_BY_ID = f'Select {settings.F_TSH_ALL_ID} From ts_entries Where {settings.F_TSH_ID} = %s'
 
-    SQL_INSERT_ENTRY = f'Insert INTO ts_entries ({settings.F_TSH_ALL}) \
-                       VALUES (%s, %s, %s, %s, %s, %s, %s)\
+    SQL_INSERT_ENTRY = f'Insert INTO ts_entries ({settings.F_TSH_ALL_ID}) \
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s)\
                        '
 
     SQL_DELETE_ENTRY = f'Delete From ts_entries Where {settings.F_TSH_ID} = %s'
@@ -94,23 +97,33 @@ class Entries:
                         Where {settings.F_TSH_ID} = %s\
                        '
 
-    SQL_FOR_APPROVAL_ENTRIES = f'Select {settings.F_TSH_ALL_ID}, {settings.F_PRJ_NAME}, {settings.F_USR_NAME} \
-                                From ts_entries, ts_projects, ts_users \
-                                Where {settings.F_TSH_STATUS} = \'{settings.IN_APPROVE_STATUS}\' \
-                                And {settings.F_TSH_PRJ_ID} = {settings.F_PRJ_ID} \
-                                And {settings.F_TSH_USER_ID} = {settings.F_USR_ID} \
-                                And {settings.F_PRJ_MANAGER_ID} = %s'
+    SQL_FOR_APPROVAL_ENTRIES_ID = f'Select {settings.F_TSH_ALL_ID}, {settings.F_PRJ_NAME}, {settings.F_USR_NAME} '\
+                                  f'From ts_entries, ts_projects, ts_users '\
+                                  f'Where {settings.F_TSH_STATUS} = \'{settings.IN_APPROVE_STATUS}\' '\
+                                  f'And {settings.F_TSH_PRJ_ID} = {settings.F_PRJ_ID} '\
+                                  f'And {settings.F_TSH_USER_ID} = {settings.F_USR_ID} '\
+                                  f'And {settings.F_PRJ_MANAGER_ID} = %s '\
+                                  f'Order by {settings.F_TSH_DATE} DESC'
+
+    SQL_FOR_APPROVAL_ENTRIES_NAME = f'Select {settings.F_TSH_ALL_ID}, {settings.F_PRJ_NAME}, {settings.F_USR_NAME} '\
+                                    f'From ts_entries, ts_projects, ts_users '\
+                                    f'Where {settings.F_TSH_STATUS} = \'{settings.IN_APPROVE_STATUS}\' '\
+                                    f'And {settings.F_TSH_PRJ_ID} = {settings.F_PRJ_ID} '\
+                                    f'And {settings.F_TSH_USER_ID} = {settings.F_USR_ID} '\
+                                    f'And {settings.F_USR_NAME} like %s '\
+                                    f'Order by {settings.F_TSH_DATE} DESC'
 
     SQL_UPDATE_STATUS = f'Update ts_entries \
                         Set {settings.F_TSH_STATUS} = %s, {settings.F_TSH_COMMENT} = %s \
                         Where {settings.F_TSH_ID} in %s\
                        '
-    SQL_GET_ENTRIES_BY_USER_NAME = (f'Select {settings.F_TSH_COMMENT}, {settings.F_TSH_DATE}, {settings.F_TSH_HOURS}, '
+    SQL_GET_ENTRIES_BY_USER_NAME = (f'Select {settings.F_TSH_COMMENT}, {settings.F_TSH_DATE}, {settings.F_TSH_HOURS}, {settings.F_USR_NAME}, '
                                     f'{settings.F_TSH_NOTE}, {settings.F_TSH_STATUS}, {settings.F_PRJ_NAME} '
                                     f'From ts_entries e, ts_users u, ts_projects p '
-                                    f'Where {settings.F_USR_NAME} = %s '
+                                    f'Where {settings.F_USR_NAME} like %s '
                                     f'And {settings.F_TSH_USER_ID} = {settings.F_USR_ID} '
-                                    f'And {settings.F_TSH_PRJ_ID} = {settings.F_PRJ_ID}'
+                                    f'And {settings.F_TSH_PRJ_ID} = {settings.F_PRJ_ID} '
+                                    f'Order by {settings.F_TSH_DATE}'
                                     )
 
     @classmethod
@@ -165,7 +178,12 @@ class Entries:
         conn = get_connect()
         with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
             try:
-                curs.execute(cls.SQL_INSERT_ENTRY, (user_id, prj_id, hours, status, note, date, comment))
+                # Get entry id
+                curs.execute(cls.SQL_GET_ENTRY_ID)
+                tsh_id = getattr(curs.fetchall()[0], settings.F_TSH_ID)
+
+                curs.execute(cls.SQL_INSERT_ENTRY, (tsh_id, user_id, prj_id, hours, status, note, date, comment))
+                return tsh_id
             except Exception as ex:
                 util.log_error(f'Error on Insert Entry for prj_id "{prj_id}": ({ex})')
                 curs.execute('rollback')
@@ -211,15 +229,15 @@ class Entries:
             curs.execute('commit')
 
     @classmethod
-    def get_for_approval_entries(cls, user_id=None):
+    def get_for_approval_entries_id(cls, user_id=None):
         try:
-            # util.log_debug(f'get_for_approval_entries: for user_id={user_id}')
+            # util.log_debug(f'get_for_approval_entries_id: for user_id={user_id}')
             if user_id is None:
                 raise Exception('user_id is None')
 
             conn = get_connect()
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
-                curs.execute(cls.SQL_FOR_APPROVAL_ENTRIES, (user_id,))
+                curs.execute(cls.SQL_FOR_APPROVAL_ENTRIES_ID, (user_id,))
                 return curs.fetchall()
 
         except Exception as ex:
@@ -227,34 +245,45 @@ class Entries:
             raise ex
 
     @classmethod
-    def update_for_approval_status(cls, e_list, verdict, comment):
-            # util.log_debug(f'update_for_approval_status: for list={e_list} with verdict={verdict}')
-            if e_list is None:
-                raise Exception('list of entries is None')
-
-            if verdict:
-                status = f'{settings.APPROVED_STATUS}'
-            else:
-                status = f'{settings.REJECTED_STATUS}'
+    def get_for_approval_entries_name(cls, user_name=None):
+        try:
+            # util.log_debug(f'get_for_approval_entries_name: for user_name={user_name}')
 
             conn = get_connect()
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
-                try:
-                    curs.execute(cls.SQL_UPDATE_STATUS, (status, comment, e_list))
-                except Exception as ex:
-                    util.log_error(f'Error on Update for approval Entries for list={e_list}, verdict={verdict}: ({ex})')
-                    curs.execute('rollback')
-                    raise ex
+                curs.execute(cls.SQL_FOR_APPROVAL_ENTRIES_NAME, (user_name,))
+                return curs.fetchall()
 
-                curs.execute('commit')
+        except Exception as ex:
+            util.log_error(f'Error on Select for approval Entries for user_name={user_name}: ({ex})')
+            raise ex
+
+    @classmethod
+    def update_for_approval_status(cls, e_list, verdict, comment):
+        # util.log_debug(f'update_for_approval_status: for list={e_list} with verdict={verdict}')
+        if e_list is None:
+            raise Exception('list of entries is None')
+
+        if verdict:
+            status = f'{settings.APPROVED_STATUS}'
+        else:
+            status = f'{settings.REJECTED_STATUS}'
+
+        conn = get_connect()
+        with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+            try:
+                curs.execute(cls.SQL_UPDATE_STATUS, (status, comment, e_list))
+            except Exception as ex:
+                util.log_error(f'Error on Update for approval Entries for list={e_list}, verdict={verdict}: ({ex})')
+                curs.execute('rollback')
+                raise ex
+
+            curs.execute('commit')
 
     @classmethod
     def get_entries_by_user_name(cls, user_name=None):
         try:
             # util.log_debug(f'get_entries_by_user_name: for user_name={user_name}')
-            if user_name is None:
-                raise Exception('user_name is None')
-
             conn = get_connect()
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
                 curs.execute(cls.SQL_GET_ENTRIES_BY_USER_NAME, (user_name,))
@@ -281,6 +310,11 @@ class Projects:
 
     SQL_PROJECT_BY_ID = (f'Select {settings.F_PRJ_ALL_ID} From ts_projects '
                          f'Where {settings.F_PRJ_ID} = %s')
+
+    SQL_PROJECTS_BY_NAME = (f'Select {settings.F_PRJ_ALL_ID}, {settings.F_USR_NAME} From ts_projects, ts_users '
+                            f'Where lower({settings.F_PRJ_NAME}) like lower(%s) '
+                            f'And {settings.F_PRJ_MANAGER_ID} = {settings.F_USR_ID} '
+                            f'Order by {settings.F_PRJ_NAME}')
 
     SQL_INSERT_PROJECT = f'Insert INTO ts_projects ({settings.F_PRJ_ALL_ID}) VALUES (%s, %s, %s, %s, %s, %s)'
 
@@ -333,6 +367,18 @@ class Projects:
 
         except Exception as ex:
             util.log_error(f'Error on getting project by id={prj_id}: ({ex})')
+            raise ex
+
+    @classmethod
+    def get_projects_by_name(cls, prj_name):
+        try:
+            conn = get_connect()
+            with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                curs.execute(cls.SQL_PROJECTS_BY_NAME, (prj_name,))
+                return curs.fetchall()
+
+        except Exception as ex:
+            util.log_error(f'Error on getting projects by name={prj_name}: ({ex})')
             raise ex
 
     @classmethod
@@ -432,7 +478,7 @@ class Users:
                    f'Where {settings.F_USR_ROLE} in (\'{settings.R_MANAGER}\', \'{settings.R_ADMIN}\') ' \
                    f'Order by {settings.F_USR_NAME}'
 
-    SQL_USER_BY_NAME = f'Select {settings.F_USR_ALL_ID} From ts_users Where {settings.F_USR_NAME} = %s'
+    SQL_USER_BY_NAME = f'Select {settings.F_USR_ALL_ID} From ts_users Where lower({settings.F_USR_NAME}) like lower(%s)'
 
     SQL_USER_BY_ID = f'Select {settings.F_USR_ALL_ID} From ts_users Where {settings.F_USR_ID} = %s'
 
@@ -601,7 +647,6 @@ class Users:
 class Parameters:
 
     SQL_GET_PARAM_VALUE = f'Select {settings.F_PRM_VALUE} From ts_parameters Where {settings.F_PRM_NAME} = %s'
-
     SQL_UPDATE_PARAM = f'Update ts_parameters Set {settings.F_PRM_VALUE} = %s Where {settings.F_PRM_NAME} = %s'
 
     @classmethod
@@ -631,8 +676,81 @@ class Parameters:
             curs.execute('commit')
 
 
+class Messages:
+
+    SQL_INSERT_MESSAGE = f'Insert INTO ts_messages ('\
+                           f'{settings.F_MSG_FROM_USER},'\
+                           f'{settings.F_MSG_TO_USER},'\
+                           f'{settings.F_MSG_TEXT},'\
+                           f'{settings.F_MSG_TIMESHEET}) '\
+                         f'Values (%s, %s, %s, %s)'
+
+    SQL_GET_MESSAGES = f'Select {settings.F_USR_NAME},'\
+                       f'{settings.F_MSG_TEXT},'\
+                       f'{settings.F_MSG_CREATION_DATE},'\
+                       f'{settings.F_MSG_IS_READ},'\
+                       f'{settings.F_TSH_DATE},'\
+                       f'{settings.F_TSH_STATUS},'\
+                       f'{settings.F_TSH_NOTE} '\
+                       f'From ts_messages, ts_users, ts_entries '\
+                       f'Where {settings.F_MSG_TO_USER} = %s '\
+                       f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
+                       f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
+                       f'Order by  {settings.F_MSG_CREATION_DATE}'
+
+    SQL_GET_UNREAD_COUNT = f'Select count(*) '\
+                           f'From ts_messages '\
+                           f'Where msg_to_user_id = %s '\
+                           f'And not msg_is_read'\
 
 
+    @classmethod
+    def add_message(cls, msg, from_user_id, data):
+        # data - словарь пар {'tsh_id': 'to_user_id'}
+        util.log_debug(f'add_message: msg:{msg}; from_user_id: {from_user_id}; data: {data};')
+        conn = get_connect()
+        with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+            try:
+                util.log_debug(f'SQL: {cls.SQL_INSERT_MESSAGE}')
+                for tsh_id in data:
+                    curs.execute(cls.SQL_INSERT_MESSAGE, (from_user_id, data[tsh_id], msg, tsh_id))
+            except Exception as ex:
+                util.log_error(f'Error on Insert message: {data[2]}: ({ex})')
+                curs.execute('rollback')
+                raise ex
+
+            curs.execute('commit')
+
+    @classmethod
+    def get_messages(cls, to_user_id):
+        try:
+            conn = get_connect()
+            with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                curs.execute(cls.SQL_GET_MESSAGES, (to_user_id,))
+                return curs.fetchall()
+
+        except Exception as ex:
+            util.log_error(f'Error on getting messages for user: {to_user_id}: ({ex})')
+            raise ex
+
+    @classmethod
+    def get_unread_count(cls, to_user_id):
+        try:
+            conn = get_connect()
+            with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                curs.execute(cls.SQL_GET_UNREAD_COUNT, (to_user_id,))
+                return curs.fetchall()
+
+        except Exception as ex:
+            util.log_error(f'Error on getting unread messages for user: {to_user_id}: ({ex})')
+            raise ex
+
+
+def a(x='', **params):
+    util.log_tmp(x)
+    util.log_tmp(params)
+    util.log_tmp(params.get('c'))
+    util.log_tmp(params.get('b'))
 
 
 # Отладка
@@ -640,7 +758,9 @@ class Parameters:
 if __name__ == '__main__':
     util.log_debug(f'{__name__}')
     try:
-        pass
+        a('1', a='2', b=3)
+        # a(
+        # util.log_tmp(f'{normalize_url('http://193.168.46.78,193.168.46.78/api/test_session/user')}')
 
     except Exception as ex:
         traceback.print_exc()

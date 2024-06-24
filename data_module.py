@@ -42,7 +42,8 @@ def get_entries_by_user_name(user_name):
             settings.F_PRJ_NAME: str(getattr(e, settings.F_PRJ_NAME)),
             settings.F_TSH_HOURS: str(getattr(e, settings.F_TSH_HOURS)),
             settings.F_TSH_NOTE: str(getattr(e, tsh_note)),
-            settings.F_TSH_COMMENT: str(getattr(e, tsh_comment))
+            settings.F_TSH_COMMENT: str(getattr(e, tsh_comment)),
+            settings.F_USR_NAME: str(getattr(e, settings.F_USR_NAME)),
         }
         cnt += 1
 
@@ -75,7 +76,7 @@ def update_status(e_list, verdict, comment):
 
 def insert_entry(user_id=None, prj_id=None, data=None):
     entries = pg_module.Entries()
-    entries.add_entry(user_id=user_id, prj_id=prj_id, data=data)
+    return entries.add_entry(user_id=user_id, prj_id=prj_id, data=data)
 
 
 def delete_entry(tsh_id=None):
@@ -134,25 +135,25 @@ def get_all_entries(user_id=None, week=None):
 
     except Exception as ex:
         traceback.print_exc()
-        util.log_error(f'Exception: {ex}')
+        raise ex
 
 
-def get_entries_for_approval(user_id):
+def get_entries_for_approval_id(user_id):
     try:
-        # Выполняем поиск тймшитов в БД
+        # Выполняем поиск таймшитов по идентификатору РП
         #
         entries = pg_module.Entries()
         if entries is None:
             raise Exception('entries is None')
 
-        entries_data = entries.get_for_approval_entries(user_id)
+        entries_data = entries.get_for_approval_entries_id(user_id)
 
         if entries_data is None:
             util.log_error(f'Data Base is not available')
             exit(0)
 
         if len(entries_data) == 0:
-            util.log_debug(f'Нет записей для утверждения пользоватялем user_id={user_id}')
+            util.log_debug(f'Нет записей для утверждения пользователем user_id={user_id}')
             return None
 
         # util.log_debug(f'select: {entries_data}')
@@ -171,7 +172,8 @@ def get_entries_for_approval(user_id):
                 settings.F_PRJ_NAME: str(getattr(e, settings.F_PRJ_NAME)),
                 settings.F_TSH_HOURS: str(getattr(e, settings.F_TSH_HOURS)),
                 settings.F_TSH_NOTE: str(getattr(e, tsh_note)),
-                settings.F_TSH_COMMENT: str(getattr(e, tsh_comment))
+                settings.F_TSH_COMMENT: str(getattr(e, tsh_comment)),
+                settings.F_TSH_USER_ID: str(getattr(e, settings.F_TSH_USER_ID))
             }
 
         return data
@@ -179,6 +181,42 @@ def get_entries_for_approval(user_id):
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'Exception: {ex}')
+
+
+def get_entries_for_approval_name(user_name):
+    try:
+        # Выполняем поиск таймшитов в БД по имени РП
+        #
+        entries = pg_module.Entries()
+        entries_data = entries.get_for_approval_entries_name(user_name)
+
+        if len(entries_data) == 0:
+            util.log_debug(f'Нет записей для утверждения пользователем user_name={user_name}')
+            return None
+
+        # Формируем словарь
+        #
+        data = {}
+        cnt = 0
+        for e in entries_data:
+            tsh_id = str(getattr(e, settings.F_TSH_ID))
+            tsh_note = '' if settings.F_TSH_NOTE is None else settings.F_TSH_NOTE
+            tsh_comment = '' if settings.F_TSH_COMMENT is None else settings.F_TSH_COMMENT
+            data[str(cnt)] = {
+                settings.F_USR_NAME: str(getattr(e, settings.F_USR_NAME)),
+                settings.F_TSH_DATE: str(getattr(e, settings.F_TSH_DATE)),
+                settings.F_PRJ_NAME: str(getattr(e, settings.F_PRJ_NAME)),
+                settings.F_TSH_HOURS: str(getattr(e, settings.F_TSH_HOURS)),
+                settings.F_TSH_NOTE: str(getattr(e, tsh_note)),
+                settings.F_TSH_COMMENT: str(getattr(e, tsh_comment))
+            }
+            cnt += 1
+
+        return data
+
+    except Exception as ex:
+        traceback.print_exc()
+        raise ex
 
 
 # Формирует словарь из курсора entries (для таблицы)
@@ -282,6 +320,29 @@ def get_user_by_name_list(usr_name):
         getattr(user, settings.F_USR_ROLE),
         getattr(user, settings.F_USR_PASSWORD)
     )
+
+
+def get_users_by_name(usr_name):
+    users = pg_module.Users()
+    all_users = users.get_user_by_name(usr_name)
+
+    if all_users is None or len(all_users) == 0:
+        util.log_error(f'get_users_by_name: не удалось найти пользователя: {usr_name}')
+        return {'info': f'Не найдено ни одного пользователя, удовлетворяющего критерию: {usr_name}'}
+
+    data = {}
+    cnt = 0
+    for e in all_users:
+        # tsh_comment = '' if settings.F_TSH_COMMENT is None else settings.F_TSH_COMMENT
+        data[str(cnt)] = {
+            settings.F_USR_NAME: str(getattr(e, settings.F_USR_NAME)),
+            settings.F_USR_ROLE: str(getattr(e, settings.F_USR_ROLE)),
+            settings.F_USR_MAIL: str(getattr(e, settings.F_USR_MAIL)),
+            settings.F_USR_INFO: str(getattr(e, settings.F_USR_INFO)),
+        }
+        cnt += 1
+
+    return data
 
 
 def get_user_by_id_list(usr_id):
@@ -390,10 +451,32 @@ def get_all_projects_dict(usr_id, all_p=True):
                 settings.F_PRJ_ORG: prj_org,
             }
             projects[prj_id] = p_dict
-        else:
-            util.log_debug(f'skip project: prj_name={prj_name}')
+        # else:
+        #     util.log_debug(f'skip project: prj_name={prj_name}')
 
     return projects
+
+
+def get_projects_by_name(prj_name):
+    projects = pg_module.Projects
+    projects_data = projects.get_projects_by_name(prj_name)
+
+    data = {}
+    cnt = 0
+    for e in projects_data:
+        # tsh_note = '' if settings.F_TSH_NOTE is None else settings.F_TSH_NOTE
+        # tsh_comment = '' if settings.F_TSH_COMMENT is None else settings.F_TSH_COMMENT
+        data[str(cnt)] = {
+            settings.F_PRJ_ID: str(getattr(e, settings.F_PRJ_ID)),
+            settings.F_USR_NAME: str(getattr(e, settings.F_USR_NAME)),
+            settings.F_PRJ_NAME: str(getattr(e, settings.F_PRJ_NAME)),
+            settings.F_PRJ_START_DATE: str(getattr(e, settings.F_PRJ_START_DATE)),
+            settings.F_PRJ_END_DATE: str(getattr(e, settings.F_PRJ_END_DATE)),
+            settings.F_PRJ_ORG: str(getattr(e, settings.F_PRJ_ORG)),
+        }
+        cnt += 1
+
+    return data
 
 
 def get_project_by_id_list(prj_id):
@@ -461,4 +544,22 @@ def where_project_refs(prj_id):
         ])
 
     return entries_list
+
+
+# MESSAGES
+#
+def add_message(msg, from_usr_id, data):
+    msgs = pg_module.Messages
+    msgs.add_message(msg, from_usr_id, data)
+
+
+def get_messages(to_usr_id):
+    msgs = pg_module.Messages
+    return msgs.get_messages(to_usr_id)
+
+
+def get_unread_count(to_usr_id):
+    msgs = pg_module.Messages
+    return msgs.get_unread_count(to_usr_id)
+
 
