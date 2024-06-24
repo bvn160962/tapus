@@ -31,7 +31,7 @@ p {
 */
 select {
     background-color: var(--def-background);
-    max-width:200px;
+    max-width: 200px;
     height: var(--inp-height);
     border: 2px solid gray;
 }
@@ -105,4 +105,10 @@ select {
 .center {
   display: flex;
   justify-content: center;
+}
+
+/* Нормальный шрифт
+*/
+.normal {
+    font-weight: normal;
 }

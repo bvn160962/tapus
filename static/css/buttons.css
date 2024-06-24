@@ -53,6 +53,39 @@ button {
     background-color: #87CEEB;
 }
 
+/*** Для кнопок с иконками в общем заголовке для всех модулей
+*/
+.h-btn-container {
+    position: relative;
+    float:right;
+}
+
+.h-btn-icon {
+    /*padding: 0;*/
+    border: 0;
+    padding-right: 5px;
+    /*padding-left: 5px;*/
+    color: var(--def-color);
+    background-color: transparent;
+}
+
+.h-btn-text {
+    position: absolute;
+    top: 2;
+    left: 12;
+    color: white;
+    padding: 2px;
+    font-size: 10px;
+    font-weight: bold;
+    border: 1px solid var(--def-color);
+    border-radius: 50%;
+    background-color: red;
+    line-height: 10px;
+    min-width: 10px;
+    text-align: center;
+}
+
+
 /*** Для кнопок с иконками
 */
 .btn-icon {

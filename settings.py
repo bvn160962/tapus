@@ -1,13 +1,39 @@
-import logging
-import sys
-
+#
 # Для отладки - вход без регистрации
-DBG_DO_LOGIN = False
+DBG_DO_LOGIN = True
 DBG_USER_ID = 102
 DBG_USER_NAME = 'user'
 DBG_USER_ROLE = 'Administrator'
 
-SHOW_EMPTY_WEEK = False
+SHOW_EMPTY_WEEK = True
+
+# Длительность ожидания ответа при проверке существования сессии Socket в секундах
+SOCKET_TEST_TIMEOUT = 0.5
+
+# Использовать систему оповещения
+USE_NOTIFICATIONS = True
+
+# REST API
+# Получение списка отработанного времени
+API_TIMESHEETS = '/api/timesheets/'
+API_TIMESHEETS_BY_USER = f'{API_TIMESHEETS}<user_name>'
+
+# Получение списка проектов
+API_PROJECTS = '/api/projects/'
+API_PROJECTS_BY_NAME = f'{API_PROJECTS}<project_name>'
+
+# Получение списка записей на согласование
+API_APPROVEMENTS = '/api/approvements/'
+API_APPROVEMENTS_BY_MANAGER = f'{API_APPROVEMENTS}<manager_name>'
+
+# Получение списка пользователей
+API_USERS = '/api/users/'
+API_USERS_BY_NAME = f'{API_USERS}<user_name>'
+
+# Использовать авторизацию при вызове API запросов
+API_USE_AUTHORIZATION = True
+API_AUTHORIZATION_HEADER = 'Authorization'
+API_AUTHORIZATION_TOKEN = 'Y8OxltVburAc95YN92ln/2r9XUVmiQusLigbFvOJQ!pTRVEr6RjCwwPfBbPxsmcM'
 
 # Показывать диалог подтверждения удаления в виде модального окна
 USE_MODAL_CONFIRMATION_DIALOG = True
@@ -16,25 +42,11 @@ CONFIRMATION_DIALOG_ID = 'confirm_dialog_id'
 # Показывать сообщение в виде модального окна
 USE_MESSAGE_DIALOG = True
 MESSAGE_DIALOG_ID = 'message_dialog_id'
+MESSAGE_DIALOG_LABEL_ID = 'message_dialog_label_id'
 OK_BUTTON_ID = 'message_dialog_ok_btn_id'
 
 # Имя ключа куки для передачи сообщения
 COOKIE_SHOW_MESSAGE = 'showMessage'
-
-CLIENT_OS_SUPPORTED = ('Windows', 'iPad', 'iPhone')
-
-IS_WINDOWS = (sys.platform == 'win32')
-if IS_WINDOWS:
-    LOG_DIR = 'c:\\tsh_home\\logs\\'
-else:
-    LOG_DIR = '/var/log/timesheets/'
-
-LOG_FILE_NAME = LOG_DIR + 'app_server.log'
-LOG_FILE_MODE = 'w'  # 'a' - append, 'w' - rewrite
-LOG_FILE_LEVEL = logging.DEBUG
-
-LOG_FILE_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
-# LOG_FILE_FORMAT = '%(asctime)s %(funcName)s, line %(lineno)s: %(message)s'
 
 # SESSION
 S_PERMANENT = False
@@ -62,15 +74,14 @@ M_LOGIN = 'login'
 M_NAME = 'name'
 M_URL = 'url'
 M_TITLE = 'title'
-
-API_TIMESHEETS_BY_USER = '/api/timesheets/<user_name>'
+M_HTML = 'create_html'
 
 MODULES = {
-    M_TIMESHEETS: {M_NAME: 'Табель', M_URL: '/timesheets', M_TITLE: 'Учет отработанного времени'},
-    M_APPROVEMENT: {M_NAME: 'Согласование', M_URL: '/approvement', M_TITLE: 'Согласование отработанного времени'},
-    M_USERS: {M_NAME: 'Пользователи', M_URL: '/users', M_TITLE: 'Управление пользователями'},
-    M_PROJECTS: {M_NAME: 'Проекты', M_URL: '/projects', M_TITLE: 'Управление проектами'},
-    M_LOGIN: {M_NAME: 'Регистрация', M_URL: '/login/<module>', M_TITLE: 'Регистрация'}
+    M_TIMESHEETS: {M_NAME: 'Табель', M_URL: '/timesheets', M_TITLE: 'Учет отработанного времени', M_HTML: 'create_timesheet_html'},
+    M_APPROVEMENT: {M_NAME: 'Согласование', M_URL: '/approvement', M_TITLE: 'Согласование отработанного времени', M_HTML: 'create_approvement_html'},
+    M_USERS: {M_NAME: 'Пользователи', M_URL: '/users', M_TITLE: 'Управление пользователями', M_HTML: 'create_users_html'},
+    M_PROJECTS: {M_NAME: 'Проекты', M_URL: '/projects', M_TITLE: 'Управление проектами', M_HTML: 'create_projects_html'},
+    M_LOGIN: {M_NAME: 'Регистрация', M_URL: '/login/<module>', M_TITLE: 'Регистрация', M_HTML: 'create_login_html'}
 }
 
 # Стили для тэгов
@@ -114,6 +125,7 @@ C_CLIENT_OS_TYPE = 'c_client_os_type'
 #
 TABLE_BUTTON = 'table_cell_btn'
 SAVE_BUTTON = 'save_btn'
+MSG_BUTTON = 'msg_btn'
 NEW_BUTTON = 'new_btn'
 REF_BUTTON = 'reference_btn'
 DELETE_BUTTON = 'delete_btn'
@@ -130,6 +142,7 @@ UPDATE_BUTTON = 'update_btn'
 LOGOFF_BUTTON = 'logoff_btn'
 HIDEINFO_BUTTON = 'hideinfo_btn'
 DEBUG_BUTTON = 'debug_btn'
+NOTIFICATION_BUTTON = 'notification_btn'
 
 # Name для login диалога
 #
@@ -180,6 +193,18 @@ F_USR_ALL_ID = f'{F_USR_ID}, {F_USR_ALL}'
 F_PRM_NAME = 'prm_name'
 F_PRM_VALUE = 'prm_value'
 PRM_LOGIN_COUNT = 'login_count'
+
+# Атрибуты таблицы <Messages>
+#
+F_MSG_ID = 'msg_id'
+F_MSG_FROM_USER = 'msg_from_user_id'
+F_MSG_TO_USER = 'msg_to_user_id'
+F_MSG_TEXT = 'msg_text'
+F_MSG_IS_READ = 'msg_is_read'
+F_MSG_CREATION_DATE = 'msg_creation_date'
+F_MSG_TIMESHEET = 'msg_timesheet_id'
+F_MSG_ALL = f'{F_MSG_FROM_USER}, {F_MSG_TO_USER}, {F_MSG_TEXT}, {F_MSG_IS_READ}, {F_MSG_CREATION_DATE}, {F_MSG_TIMESHEET}'
+F_MSG_ALL_ID = f'{F_MSG_ID}, {F_MSG_ALL}'
 
 # Название словаря свойств Timesheet Entry
 FLD_TSH_DICT = 'data'

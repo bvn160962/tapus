@@ -2,12 +2,40 @@ import datetime
 import hashlib
 import os
 import logging
+import sys
+from uuid import uuid4
 
-import app
-import pg_module
-import settings
+CLIENT_OS_SUPPORTED = ('Windows', 'iPad', 'iPhone')
 
-logger = None
+IS_WINDOWS = (sys.platform == 'win32')
+if IS_WINDOWS:
+    LOG_DIR = 'c:\\tsh_home\\logs\\'
+else:
+    LOG_DIR = '/var/log/timesheets/'
+
+LOG_FILE_NAME = LOG_DIR + 'app_server.log'
+LOG_FILE_MODE = 'w'  # 'a' - append, 'w' - rewrite
+LOG_FILE_LEVEL = logging.DEBUG
+
+LOG_FILE_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+# LOG_FILE_FORMAT = '%(asctime)s %(funcName)s, line %(lineno)s: %(message)s'
+
+
+# Убирает дублирование ip в url (http://193.168.46.78,193.168.46.78/api/test_session/user)
+def normalize_url(url):
+    pos_comma = url.find(',')
+    if pos_comma == -1:
+        return url
+
+    pos_slash = url.find('/api')
+    if pos_slash < pos_comma:
+        return url
+
+    return f'url={url[:pos_comma]}{url[pos_slash:]}'
+
+
+def generate_uid():
+    return str(uuid4().hex)
 
 
 def parse_string(s_in, res):
@@ -48,24 +76,6 @@ def get_client_os_type(request):
     return parse_user_agent_header(request)[1].split(';')[0]
 
 
-def is_client_os_supported():
-    app.get_c_prop(settings)
-
-
-def use_modal_confirmation_dialog():
-    verdict = False
-    if settings.USE_MODAL_CONFIRMATION_DIALOG:
-        verdict = app.get_c_prop(settings.C_CLIENT_OS_TYPE) != settings.CLIENT_OS_SUPPORTED[1]
-    return verdict
-
-
-def use_message_dialog():
-    verdict = False
-    if settings.USE_MESSAGE_DIALOG:
-        verdict = app.get_c_prop(settings.C_CLIENT_OS_TYPE) != settings.CLIENT_OS_SUPPORTED[1]
-    return verdict
-
-
 # Для работы с паролями
 #
 def get_hash(s):
@@ -74,47 +84,8 @@ def get_hash(s):
     return sha256_hash.hexdigest()
 
 
-# Доступность модулей для различных ролей
-#
-def is_module_available(module):
-    role = app.get_c_prop(settings.C_USER_ROLE)
-
-    if module == settings.M_TIMESHEETS:
-        return True
-
-    if module == settings.M_USERS:
-        return role == settings.R_ADMIN
-
-    if module == settings.M_PROJECTS:
-        return role == settings.R_ADMIN or role == settings.R_MANAGER
-
-    if module == settings.M_APPROVEMENT:
-        return role == settings.R_ADMIN or role == settings.R_MANAGER
-
-    return False
-
-
 # Логирование
 #
-def logger_init():
-    # Создать лог папку если ее нет
-    #
-    if not os.path.isdir(settings.LOG_DIR):
-        os.makedirs(settings.LOG_DIR)
-
-    global logger
-    if logger is None:
-        logger = logging.getLogger(__name__)
-        logger.setLevel(level=settings.LOG_FILE_LEVEL)
-
-        file_handler = logging.FileHandler(settings.LOG_FILE_NAME, mode=settings.LOG_FILE_MODE)
-        formatter = logging.Formatter(settings.LOG_FILE_FORMAT)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-        print(f'logger: {logger}')
-
-
-
 def log_info(msg):
     print(f'--{msg}')
     logger.info(msg)
@@ -135,29 +106,14 @@ def log_tmp(msg):
     logger.debug(msg)
 
 
-def update():
-    clear_timesheet()
-    app.set_c_prop(settings.C_WEEK, get_week())
-    app.print_cache()
-
-    pg_module.DB_CONNECT = None
-
-
-def clear_timesheet():
-    app.set_c_prop(settings.C_TIMESHEET_ID, '')
-    app.set_c_prop(settings.C_DATE, '')
-    app.set_c_prop(settings.C_TSH_BTN_VALUE, '')
-    app.set_c_prop(settings.C_PROJECT_ID, '')
-
-
 # Вспомогательные функции
 #
 def get_week():
     return get_week_by_date(datetime.datetime.now())
 
 
-def get_date():
-    return datetime.datetime.now().date()
+# def get_date():
+#     return datetime.datetime.now().date()
 
 
 def get_week_by_date(date):
@@ -240,8 +196,39 @@ def shift_week(week='', next=True):
 
     shifted_week = f'{year}-W{i:0{2}}'
     return shifted_week
-    # return s[0] + '-W' + str(i)
 
 
-logger_init()
+# def logger_init():
+#     # Создать лог папку если ее нет
+#     #
+#     if not os.path.isdir(LOG_DIR):
+#         os.makedirs(LOG_DIR)
+#
+#     global logger
+#     if logger is None:
+#         logger = logging.getLogger(__name__)
+#         logger.setLevel(level=LOG_FILE_LEVEL)
+#
+#         file_handler = logging.FileHandler(LOG_FILE_NAME, mode=LOG_FILE_MODE)
+#         formatter = logging.Formatter(LOG_FILE_FORMAT)
+#         file_handler.setFormatter(formatter)
+#         logger.addHandler(file_handler)
+#         print(f'logger: {logger}')
+
+
+# logger_init()
+
+# Создать лог папку если ее нет
+if not os.path.isdir(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+# Инициализировать logger
+logger = logging.getLogger(__name__)
+logger.setLevel(level=LOG_FILE_LEVEL)
+
+file_handler = logging.FileHandler(LOG_FILE_NAME, mode=LOG_FILE_MODE)
+formatter = logging.Formatter(LOG_FILE_FORMAT)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+print(f'logger started: {logger}')
 
