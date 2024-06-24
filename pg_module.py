@@ -12,8 +12,8 @@ DB_CONNECT = None
 
 if settings.IS_WINDOWS:
     # PG_HOST = '192.168.62.71'  # VM office
-    PG_HOST = '192.168.1.219'  # VM home
-    # PG_HOST = '127.0.0.1'    # Docker Desktop
+    # PG_HOST = '192.168.1.219'  # VM home
+    PG_HOST = '127.0.0.1'    # Docker Desktop
 else:
     PG_HOST = 'localhost'      # Cloud
 
