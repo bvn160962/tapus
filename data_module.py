@@ -558,6 +558,22 @@ def get_messages(to_usr_id):
     return msgs.get_messages(to_usr_id)
 
 
+def get_timesheet_messages(tsh_id):
+    msgs = pg_module.Messages
+    cursor = msgs.get_timesheet_messages(tsh_id)
+    msg_list = []
+    for r in cursor:
+        msg_list.append(
+            (
+                str(getattr(r, settings.F_MSG_FROM_USER)),
+                str(getattr(r, settings.F_MSG_TO_USER)),
+                str(getattr(r, settings.F_MSG_CREATION_DATE)),
+                str(getattr(r, settings.F_MSG_TEXT)),
+            )
+        )
+    return msg_list
+
+
 def get_unread_count(to_usr_id):
     msgs = pg_module.Messages
     return msgs.get_unread_count(to_usr_id)

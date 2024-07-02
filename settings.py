@@ -12,6 +12,8 @@ SOCKET_TEST_TIMEOUT = 0.5
 
 # Использовать систему оповещения
 USE_NOTIFICATIONS = True
+NOTIFICATIONS_DIALOG_ID = 'notifications_dialog_id'
+NOTIFICATIONS_DIALOG_CLOSE_BTN_ID = 'notifications_dialog_close_btn_id'
 
 # REST API
 # Получение списка отработанного времени
@@ -125,7 +127,7 @@ C_CLIENT_OS_TYPE = 'c_client_os_type'
 #
 TABLE_BUTTON = 'table_cell_btn'
 SAVE_BUTTON = 'save_btn'
-MSG_BUTTON = 'msg_btn'
+MSG_BUTTON = 'notifications_btn'
 NEW_BUTTON = 'new_btn'
 REF_BUTTON = 'reference_btn'
 DELETE_BUTTON = 'delete_btn'
@@ -216,28 +218,43 @@ EMPTY_ID_KEY = '-'
 # Разделитель на кнопке в таблице Timesheets между prj_id, tsh_id и date
 SPLITTER = '#'
 
-# Статусы для Timesheets
+# Статусы для Timesheet
 #
 EDIT_STATUS = 'edit'
 IN_APPROVE_STATUS = 'in_approve'
 APPROVED_STATUS = 'approved'
 REJECTED_STATUS = 'rejected'
-LIST_OF_STATUSES = {
-    EDIT_STATUS: 'Редактируется',
-    IN_APPROVE_STATUS: 'На согласовании',
-}
+
+
+def get_status_name(status):
+    if status == EDIT_STATUS:
+        return 'Редактируется'
+    elif status == IN_APPROVE_STATUS:
+        return 'На согласовании'
+    elif status == APPROVED_STATUS:
+        return 'Согласован'
+    elif status == REJECTED_STATUS:
+        return 'Отклонен'
+    else:
+        return 'Неизвестен'
+
+
 
 # Доступный список статусов для статуса выбранного Timesheet
 #
 def get_valid_statuses(status=None):
     if status is None:
-        return LIST_OF_STATUSES
+        return {
+        }
 
     if status == '':
-        return LIST_OF_STATUSES
+        return {
+            EDIT_STATUS: 'Редактировать',
+            IN_APPROVE_STATUS: 'Согласовать',
+        }
 
     if status == EDIT_STATUS:
-        return LIST_OF_STATUSES
+        return {IN_APPROVE_STATUS: 'Согласовать'}
 
     if status == IN_APPROVE_STATUS:
         return {IN_APPROVE_STATUS: 'На согласовании'}
@@ -247,11 +264,11 @@ def get_valid_statuses(status=None):
 
     if status == REJECTED_STATUS:
         return {
-            EDIT_STATUS: 'Редактируется',
-            REJECTED_STATUS: 'Отклонен',
+            EDIT_STATUS: 'Редактировать',
+            IN_APPROVE_STATUS: 'Согласовать',
         }
 
-    return LIST_OF_STATUSES
+    return {}
 
 # модуль Approval
 AGREE_BUTTON = 'agree_btn'

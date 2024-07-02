@@ -49,6 +49,8 @@ window.onunload = function (event) {
 //        console.log("Программа продолжает работать");
 }
 
+
+
 /*
 *  Диалог подтверждения удаления
 */
@@ -95,13 +97,14 @@ if (delete_dialog != null) { // Режим модального диалога �
 }
 
 
+
+
 /*
 *  Показать сообщение, если в cookie есть ключ "showMessage"
 */
 const message_dialog = document.getElementById("message_dialog_id");
 const message_dialog_text = document.getElementById("message_dialog_label_id");
 const closeButton = document.getElementById("message_dialog_ok_btn_id");
-
 
 function getCookie(name) {
   let cookie = document.cookie.split('; ').find(row => row.startsWith(name + '='));
@@ -125,6 +128,38 @@ if (message_dialog != null) {
         document.cookie = 'showMessage=; Max-Age=-1;'; // delete cookie key
     }
 }
+
+
+
+
+
+
+/*
+*  Показать сообщения по записи отработанного времени
+*/
+const notifications_dialog = document.getElementById("notifications_dialog_id");
+const notifications_close_button = document.getElementById("notifications_dialog_close_btn_id");
+
+// Listeners для всех кнопок с именем delete_btn
+if (notifications_dialog != null) { // Режим модального диалога включен
+    let listCloseButtons = document.getElementsByName("notifications_btn"); // Кнопка на timesheets_info
+    if (listCloseButtons != null) {
+        for( let i = 0; i < listCloseButtons.length; i++) {
+            console.log("Add listener for: " + listCloseButtons[i].name + "; tsh_id=" + listCloseButtons[i].value)
+            listCloseButtons[i].addEventListener("click", () => {
+                notifications_dialog.showModal();
+            });
+        }
+    }
+
+    // Listener на кнопку Cancel
+    notifications_close_button.addEventListener("click", () => {
+      notifications_dialog.close()
+    });
+}
+
+
+
 
 /*
 * SOCKETS

@@ -26,11 +26,15 @@ FORM_HEIGHT = '500px'
 # Server:
 #  520 Unknown Error
 
+# Стили общих кнопок в заголовке
+h_btn_tag = 'button class="material-symbols-outlined right btn-t-cell"'
+h_btn_style = 'padding-inline: 0px; margin-left: 0; margin-right: 0; margin-right: 3px'
+
 
 class BaseHTML:
 
-    def __init__(self, title, module, err_message=''):
-        def get_href_class(mdl):
+    def __init__(self, title, module, err_message='', notifications=None):
+        def get_href_class(mdl):  # Для выделения текущего модуля жирным шрифтом
             base = 'right btn-head border-left'
             if module != mdl:
                 return f'{base} normal'
@@ -68,6 +72,12 @@ class BaseHTML:
         if use_message_dialog():
             self.__message_lab = add_message_dialog(self.__body, message=err_message)
 
+        # MODAL NOTIFICATIONS DIALOG
+        if use_notifications_dialog() and module == settings.M_TIMESHEETS and notifications is not None:
+            self.__notifications_table = add_notifications_dialog(self.__body, notifications)
+        else:
+            self.__notifications_table = None
+
         # FORM
         self.__form = et.SubElement(self.__body, 'form', attrib={'name': 'form', 'method': 'POST'})
 
@@ -94,36 +104,34 @@ class BaseHTML:
 
         # Общие кнопки для всего приложения
         #
-        btn_tag = 'button class="material-symbols-outlined right btn-t-cell"'
-        style = 'padding-inline: 0px; margin-left: 0; margin-right: 0; margin-right: 3px'
 
         # LOGOFF button
-        btn = et.SubElement(header, f'{btn_tag} title="Завершить работу"', {'style': style, 'name': settings.LOGOFF_BUTTON})
+        btn = et.SubElement(header, f'{h_btn_tag} title="Завершить работу"', {'style': h_btn_style, 'name': settings.LOGOFF_BUTTON})
         btn.text = 'move_item'   # 'logout'
         # log_off = et.SubElement(p, 'button title="Завершить работу"', attrib={'type': 'submit', 'name': settings.LOGOFF_BUTTON, 'class': 'right btn-icon'})
         # i = et.SubElement(log_off, 'i', {'class': 'fa fa-user-circle-o fa-lg'})  # fa-user-o
         # i.text = '\n'  # !!!Обязательно!!! Иначе, создает одиночный тэг <i .... />, вместо парного <i> ... </i>
 
         # DEBUG button
-        btn = et.SubElement(header, f'{btn_tag} title="Состояние текущей сессии"', {'style': style, 'name': settings.DEBUG_BUTTON})
+        btn = et.SubElement(header, f'{h_btn_tag} title="Состояние текущей сессии"', {'style': h_btn_style, 'name': settings.DEBUG_BUTTON})
         btn.text = 'pest_control'
 
         # REFRESH button
-        btn = et.SubElement(header, f'{btn_tag} title="Обновить"',{'style': style, 'name': settings.UPDATE_BUTTON})
+        btn = et.SubElement(header, f'{h_btn_tag} title="Обновить"',{'style': h_btn_style, 'name': settings.UPDATE_BUTTON})
         btn.text = 'sync'
 
         # NOTIFICATION button
-        if settings.USE_NOTIFICATIONS:
+        if use_notifications_dialog():
             # Получить количество не прочтенных сообщений
             msgs = data_module.get_unread_count(app.get_c_prop(settings.C_USER_ID))
             count = getattr(msgs[0], "count")
 
-            util.log_tmp(f'msg count: {count}')
+            # util.log_tmp(f'msg count: {count}')
             container = et.SubElement(header, 'div class="h-btn-container"')
             if count > 0:
                 text = et.SubElement(container, f'a class="h-btn-text" title="Непрочитанных сообщений: {count}"')
                 text.text = str(count)
-            btn = et.SubElement(container, f'button class="material-symbols-outlined h-btn-icon" title="Сообщения"', {'style': style, 'name': settings.NOTIFICATION_BUTTON})
+            btn = et.SubElement(container, f'button class="material-symbols-outlined h-btn-icon" title="Сообщения"', {'style': h_btn_style, 'name': settings.NOTIFICATION_BUTTON})
             btn.text = 'notifications'
 
         # Навигация по сайту
@@ -180,6 +188,11 @@ class BaseHTML:
         if self.__message_lab is not None:
             self.__message_lab.text = msg
 
+    def set_notifications_message(self, msg):
+        if self.__notifications_table is not None:
+            pass
+            # self.__notifications_lab.text = msg
+
 
 # Использовать модальное окно для диалога подтверждения?
 def use_modal_confirmation_dialog():
@@ -193,6 +206,14 @@ def use_modal_confirmation_dialog():
 def use_message_dialog():
     verdict = False
     if settings.USE_MESSAGE_DIALOG:
+        verdict = app.get_c_prop(settings.C_CLIENT_OS_TYPE) != util.CLIENT_OS_SUPPORTED[1]
+    return verdict
+
+
+# Использовать модальное окно для показа списка сообщений по записи отработанного времени (tsh_id)?
+def use_notifications_dialog():
+    verdict = False
+    if settings.USE_NOTIFICATIONS:
         verdict = app.get_c_prop(settings.C_CLIENT_OS_TYPE) != util.CLIENT_OS_SUPPORTED[1]
     return verdict
 
@@ -414,7 +435,6 @@ def create_info_html(i_type='', msg=(), module='', title='', url=''):
         return f'Произошла ошибка при формировании html страницы (Create INFO):\n {ex}', 520  # Server Unknown Error
 
 
-
 def add_confirm_dialog(body, title='', message=''):
 
     # Dialog
@@ -450,6 +470,61 @@ def add_confirm_dialog(body, title='', message=''):
     btn.text = 'Нет'
 
     return l_message
+
+
+def add_notifications_dialog(body, notifications):
+    # Dialog
+    dialog = et.SubElement(body, f'dialog id={settings.NOTIFICATIONS_DIALOG_ID} class="head_style dial-pos"', {'style': 'padding: 0; border-radius: 5px'})
+    form = et.SubElement(dialog, 'form method="POST"', {'style': 'margin-bottom: 0px'})
+
+    header = et.SubElement(form, 'header class="sticky"', {'style': 'margin: 0; padding:0; border-bottom: solid 1px gray; background-color: #E5E5E5; color: black'})
+    p = et.SubElement(form, 'p', {'style': '; min-width: 550px; max-height: 300px; text-align: center;'})
+
+    # Close Button
+    btn = et.SubElement(header, f'{h_btn_tag} id={settings.NOTIFICATIONS_DIALOG_CLOSE_BTN_ID} type=button title="Закрыть окно"',
+                        {'style': f'{h_btn_style}; color: black;', 'name': settings.LOGOFF_BUTTON})
+    btn.text = 'disabled_by_default'
+
+    # btn = et.SubElement(p, f'button id={settings.NOTIFICATIONS_DIALOG_CLOSE_BTN_ID} type="button"',
+    #                     {'style': 'width: 80px; float:right;'})
+    # btn.text = 'Закрыть'
+
+    # Title
+    l_title = et.SubElement(header, 'label', {'style': 'white-space: pre-wrap; padding: 5px;'})
+    l_title.text = f'История переписки по записи отработанного времени ({len(notifications)})'
+
+    # Notifications
+    if len(notifications) > 0:
+        table = et.SubElement(p, 'table', {'style': 'border: 2px; padding: 10px'})
+
+        min_max_width = 'min-width: 100px; max-width: 300px;'
+        h_border = 'border-bottom: 2px solid gray; border-top: 2px solid gray;'
+        h_style = f'{min_max_width} {h_border} padding-left: 10px; background-color: #C0C0C0; font-weight: bold;'
+        b_border = 'border-bottom: 1px solid gray;'
+        b_style = f'{min_max_width} {b_border}  padding-left: 10px; padding-top: 10px;'
+
+        # Заголовок таблицы
+        header = ('От кого', 'Кому', 'Дата', 'Текст сообщения')
+        row = et.SubElement(table, 'tr')
+        for h in header:
+            col = et.SubElement(row, 'td align=left', {'style': h_style})
+            a = et.SubElement(col, 'a')
+            a.text = h
+
+        # Заполнение таблицы
+        for r in notifications:
+            row = et.SubElement(table, 'tr')
+            for c in r:
+                td = 'td align=left'
+                col = et.SubElement(row, td, {'style': b_style})
+                a = et.SubElement(col, 'a')
+                a.text = c
+    else:
+        lab = et.SubElement(p, 'label')
+        lab.text = 'Сообщений нет!'
+        table = None
+
+    return table
 
 
 def add_message_dialog(body, title='', message=''):
@@ -566,10 +641,9 @@ def create_delete_confirm_html(obj_id, module):
         return f'Произошла ошибка при формировании html страницы (Confirm):\n {ex}', 520  # Server Unknown Error
 
 
-
 # TIMESHEETS
 #
-def add_timesheets_info(base_html, tsh_entry=None):
+def add_timesheets_info(base_html, tsh_entry=None, notifications=()):
 
     form = base_html.get_form()
 
@@ -695,6 +769,9 @@ def add_timesheets_info(base_html, tsh_entry=None):
     col = et.SubElement(row, 'td')
     select_status = et.SubElement(col, 'select style="max-width:150px;"', attrib={'name': SELECT_STATUS_NAME})
     valid_statuses = settings.get_valid_statuses(status)
+
+    # util.log_tmp(f'valid_statuses: {valid_statuses}; status: {status}')
+
     for value in valid_statuses:
         if value == status:
             opt = et.SubElement(select_status, 'option selected', attrib={'value': value})
@@ -709,10 +786,10 @@ def add_timesheets_info(base_html, tsh_entry=None):
     col_btns = et.SubElement(row_1, 'td', {'align': 'center', 'valign': 'top', 'width': '50'})
 
     # Кнопка "Сохранить"
-    if status != settings.EDIT_STATUS:
-        btn_tag = 'button disabled'
-    else:
+    if status == settings.EDIT_STATUS or status == settings.REJECTED_STATUS or status == '':
         btn_tag = 'button'
+    else:
+        btn_tag = 'button disabled'
     btn_save = et.SubElement(col_btns, btn_tag, {'type': 'submit', 'name': settings.SAVE_BUTTON, 'value': tsh_id})
     btn_save.text = 'сохранить'
 
@@ -737,12 +814,17 @@ def add_timesheets_info(base_html, tsh_entry=None):
     btn_delete.text = 'удалить'
 
     # Кнопка "Показать сообщения"
-    if tsh_id == '':
-        btn_tag = 'button disabled'
-    else:
-        btn_tag = 'button'
-    btn_msg = et.SubElement(col_btns, btn_tag, {'type': 'submit', 'name': settings.MSG_BUTTON, 'value': tsh_id})
-    btn_msg.text = 'сообщения'
+    if use_notifications_dialog():
+        msg_cnt = len(notifications)
+        if tsh_id != '' and  msg_cnt > 0:
+            btn_msg = et.SubElement(col_btns, 'button', {'type': 'button', 'name': settings.MSG_BUTTON, 'value': tsh_id, 'style': 'min-width: 120px'})
+            btn_msg.text = f'переписка ({msg_cnt})'
+        # if tsh_id == '':
+        #     btn_tag = 'button disabled'
+        # else:
+        #     btn_tag = 'button'
+        # btn_msg = et.SubElement(col_btns, btn_tag, {'type': 'button', 'name': settings.MSG_BUTTON, 'value': tsh_id})
+        # btn_msg.text = f'переписка ({len(notifications)})'
 
     # TABLE AREA
     #
@@ -801,10 +883,11 @@ def add_timesheet_table(data, column):
                         btn_value = prj_id + settings.SPLITTER + tsh_id + settings.SPLITTER
                         hours = time_sheets[tsh_id][settings.F_TSH_HOURS]
                         note = time_sheets[tsh_id][settings.F_TSH_NOTE]
+                        comment = time_sheets[tsh_id][settings.F_TSH_COMMENT]
 
                         # Раскрасить по статусам
                         status = time_sheets[tsh_id][settings.F_TSH_STATUS]
-                        title = f' title="Описание: {note}"'
+                        title = f' title="Статус: {settings.get_status_name(status)}\nОписание: {note}\nКомментарий: {comment}"'
                         if status == settings.EDIT_STATUS:
                             btn_tag = settings.TAG_BUTTON_TABLE_EDIT + title
 
@@ -880,7 +963,7 @@ def create_timesheet_html(err_message=''):
                     settings.F_TSH_HOURS: '',
                     settings.F_TSH_NOTE: '',
                     settings.F_TSH_COMMENT: '',
-                    settings.F_TSH_STATUS: settings.EDIT_STATUS,
+                    settings.F_TSH_STATUS: '',  #settings.EDIT_STATUS,
                     settings.F_TSH_DATE: tsh_date
                 }
 
@@ -890,10 +973,16 @@ def create_timesheet_html(err_message=''):
                 msg = f'create_timesheet_html: Запись tsh_id="{tsh_id}" не найдена в базе данных'
                 return app.response(msg)  # Пока еще не сформирован html!!!
 
-        # Формируем HTML
-        base_html = BaseHTML('TimeSheets', settings.M_TIMESHEETS, err_message)
+        # Формируем список сообщений по tsh_id
+        if use_notifications_dialog() and tsh_id != '':
+            notifications = data_module.get_timesheet_messages(tsh_id)
+        else:
+            notifications = ()
 
-        add_timesheets_info(base_html, tsh_entry)
+        # Формируем HTML
+        base_html = BaseHTML('TimeSheets', settings.M_TIMESHEETS, err_message, notifications)
+
+        add_timesheets_info(base_html, tsh_entry, notifications)
 
         # util.log_tmp(f'HTML: {base_html.get_html()}')
         return base_html.get_html()
