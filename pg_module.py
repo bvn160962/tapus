@@ -167,7 +167,7 @@ class Entries:
 
     @classmethod
     def add_entry(cls, user_id=None, prj_id=None, data=None):
-        # util.log_debug(f'add_entry {prj_id}, {user_id}, {data}')
+        util.log_debug(f'add_entry {prj_id}, {user_id}, {data}')
 
         hours = data.get(settings.F_TSH_HOURS)
         status = data.get(settings.F_TSH_STATUS)
@@ -183,13 +183,13 @@ class Entries:
                 tsh_id = getattr(curs.fetchall()[0], settings.F_TSH_ID)
 
                 curs.execute(cls.SQL_INSERT_ENTRY, (tsh_id, user_id, prj_id, hours, status, note, date, comment))
-                return tsh_id
             except Exception as ex:
                 util.log_error(f'Error on Insert Entry for prj_id "{prj_id}": ({ex})')
                 curs.execute('rollback')
                 raise ex
 
             curs.execute('commit')
+        return tsh_id
 
     @classmethod
     def update_entry(cls, tsh_id=None, data=None):
@@ -691,12 +691,24 @@ class Messages:
                        f'{settings.F_MSG_IS_READ},'\
                        f'{settings.F_TSH_DATE},'\
                        f'{settings.F_TSH_STATUS},'\
-                       f'{settings.F_TSH_NOTE} '\
+                       f'{settings.F_TSH_NOTE},'\
+                       f'{settings.F_TSH_ID} '\
                        f'From ts_messages, ts_users, ts_entries '\
                        f'Where {settings.F_MSG_TO_USER} = %s '\
                        f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
                        f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
                        f'Order by  {settings.F_MSG_CREATION_DATE}'
+
+    SQL_GET_MESSAGES_BY_TSH_ID = f'Select u_to.{settings.F_USR_NAME} as {settings.F_MSG_TO_USER},'\
+                                 f' u_from.{settings.F_USR_NAME} as {settings.F_MSG_FROM_USER},'\
+                                 f' {settings.F_MSG_TEXT},'\
+                                 f' {settings.F_MSG_CREATION_DATE},'\
+                                 f' {settings.F_MSG_IS_READ} '\
+                                 f'From ts_messages, ts_users as u_to, ts_users as u_from '\
+                                 f'Where {settings.F_MSG_TIMESHEET} = %s '\
+                                 f'And {settings.F_MSG_TO_USER} = u_to.{settings.F_USR_ID} '\
+                                 f'And {settings.F_MSG_FROM_USER} = u_from.{settings.F_USR_ID} '\
+                                 f'Order by  {settings.F_MSG_CREATION_DATE}'
 
     SQL_GET_UNREAD_COUNT = f'Select count(*) '\
                            f'From ts_messages '\
@@ -731,6 +743,18 @@ class Messages:
 
         except Exception as ex:
             util.log_error(f'Error on getting messages for user: {to_user_id}: ({ex})')
+            raise ex
+
+    @classmethod
+    def get_timesheet_messages(cls, tsh_id):
+        try:
+            conn = get_connect()
+            with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                curs.execute(cls.SQL_GET_MESSAGES_BY_TSH_ID, (tsh_id,))
+                return curs.fetchall()
+
+        except Exception as ex:
+            util.log_error(f'Error on getting messages for entry: {tsh_id} : ({ex})')
             raise ex
 
     @classmethod

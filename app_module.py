@@ -251,7 +251,8 @@ def notifications(module):
             is_read = 'да' if getattr(msg, settings.F_MSG_IS_READ) else 'нет'
             ref_obj = f'{getattr(msg, settings.F_TSH_DATE)}/ '\
                       f'{getattr(msg, settings.F_TSH_STATUS)}/ '\
-                      f'{getattr(msg, settings.F_TSH_NOTE)}/ '
+                      f'{getattr(msg, settings.F_TSH_NOTE)}/ '\
+                      f'{getattr(msg, settings.F_TSH_ID)}/ '
             s_list.append(
                 (
                     str(getattr(msg, settings.F_USR_NAME)),
@@ -366,7 +367,7 @@ def timesheets_save(values):
             if value == ui_module.INPUT_COMMENT_NAME:
                 comment = values[value]
 
-        # util.log_tmp(f'prj_id: {prj_id}; man_id: {man_id}; status: {inp_status}')
+        util.log_tmp(f'prj_id: {prj_id}; man_id: {man_id}; status: {inp_status}')
 
         if tsh_id == '':
             # Новая запись - Insert
@@ -406,7 +407,7 @@ def timesheets_save(values):
             )
 
         # Оповестить руководителя проекта
-        if settings.USE_NOTIFICATIONS and inp_status == settings.IN_APPROVE_STATUS:
+        if ui_module.use_notifications_dialog() and inp_status == settings.IN_APPROVE_STATUS:
             data_module.add_message(comment, app.get_c_prop(settings.C_USER_ID), {tsh_id: man_id})
 
         return ''
@@ -893,7 +894,7 @@ def approve(values, verdict=True):
             data_module.update_status(tuple(tsh_id_list), verdict, msg)
 
             # Оповестить пользователей об отклонении записей
-            if settings.USE_NOTIFICATIONS:
+            if ui_module.use_notifications_dialog():
                 data_module.add_message(msg, app.get_c_prop(settings.C_USER_ID), tsh_id_dict)
 
             return ui_module.create_approvement_html()

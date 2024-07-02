@@ -66,7 +66,7 @@ def parse_string(s_in, res):
 
 def parse_user_agent_header(request):
     ua_header = str(request.headers.get("User-Agent"))
-    # log_tmp(f'{ua_header}')
+    # log_debug(f'{ua_header}')
     return parse_string(ua_header, [])
 
 
