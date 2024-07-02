@@ -130,3 +130,11 @@ button {
     padding-right:15px;
 }
 
+.btn-msg {
+    display: block;
+    background-color: transparent;
+    border: transparent;
+    width: 20%;
+    height: 50px;
+    text-align: left;
+}

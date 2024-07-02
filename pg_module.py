@@ -11,16 +11,16 @@ DB_CONNECT = None
 
 if util.IS_WINDOWS:
     # PG_HOST = '192.168.62.79'  # VM office (Bridge)
-    PG_HOST = '192.168.225.150'  # VM country (NAT)
+    # PG_HOST = '192.168.225.150'  # VM country (NAT)
     # PG_HOST = '192.168.1.219'  # VM home (Bridge)
-    # PG_HOST = '127.0.0.1'    # Docker Desktop
+    PG_HOST = '127.0.0.1'    # Docker Desktop
 else:
     PG_HOST = 'localhost'      # Cloud
 
 PG_PORT = '5432'
 PG_DATABASE = 'timesheets_db'
 PG_USER = 'timesheets_user'
-
+PG_PASSWORD = 'infodba'
 
 # Создать соединение с БД, если еще не установлено
 #
@@ -31,8 +31,8 @@ def get_connect():
 
         if DB_CONNECT is None:
             util.log_info('DB_Connect...')
-            DB_CONNECT = psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DATABASE, user=PG_USER)
-            # DB_CONNECT = psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DATABASE, user=PG_USER, password=PG_PASSWORD)
+            # DB_CONNECT = psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DATABASE, user=PG_USER)
+            DB_CONNECT = psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DATABASE, user=PG_USER, password=PG_PASSWORD)
 
         #0 util.log_debug(f'TRANSACTION_STATUS_IDLE={psycopg2.extensions.TRANSACTION_STATUS_IDLE}')
         #1 util.log_debug(f'TRANSACTION_STATUS_ACTIVE={psycopg2.extensions.TRANSACTION_STATUS_ACTIVE}')

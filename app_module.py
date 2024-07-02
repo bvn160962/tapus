@@ -262,14 +262,17 @@ def notifications(module):
                  )
             )
 
-        return ui_module.create_info_html(settings.INFO_TYPE_INFORMATION, s_list, module, title)
+        return ui_module.create_msg_html(module)
 
     except Exception as ex:
         return app.response(f'{ex}', module)
 
 
 # Обработчик кнопок, общих для всех модулей
-def common_buttons(value, module):
+def common_buttons(value, module, tsh_id=''):
+    util.log_tmp(f'value={value}')
+    # Нажата кнопка NOTIFICATIONS
+    #
     if value == settings.NOTIFICATION_BUTTON:
         return notifications(module)
 
@@ -287,6 +290,11 @@ def common_buttons(value, module):
     #
     if value == settings.UPDATE_BUTTON:
         return update(module)
+
+    # Нажата кнопка сообщения в NOTIFICATIONS
+    #
+    if value == settings.NOTIFICATION_MESSAGE_BUTTON:
+        return ui_module.create_msg_html(module, tsh_id)
 
     # Не нажата ни одна из общих кнопок
     return ''
@@ -446,7 +454,7 @@ def timesheets_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_TIMESHEETS)
+            html = common_buttons(value, settings.M_TIMESHEETS, values[value])
             if html != '':
                 return html
 
@@ -510,6 +518,11 @@ def timesheets_post(values):
             #
             if value == settings.WEEK_BUTTON_PREV:
                 return prev_week()
+
+            # Нажата кнопка сообщения
+            #
+            if value == settings.NOTIFICATION_MESSAGE_BUTTON:
+                return 'список'
 
         return 'Кнопка не обработана!', 404
 

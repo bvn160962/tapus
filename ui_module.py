@@ -377,7 +377,7 @@ def create_info_html(i_type='', msg=(), module='', title='', url=''):
 
         if isinstance(msg, str):  # div
             # util.log_debug(f'type: строка')
-            div = et.SubElement(p, 'div', {'style': 'display: inline-block; margin:7px'})
+            div = et. SubElement(p, 'div', {'style': 'display: inline-block; margin:7px'})
             div.text = msg
         else:
             if isinstance(msg, tuple) or isinstance(msg, list):
@@ -1450,3 +1450,46 @@ def t_html():
 
     return s_html
 
+
+# просмотр входящих сообщений
+#
+def create_msg_html(module, tsh_id=''):
+    util.log_debug(f'tsh_id={tsh_id}')
+
+    try:
+        url_ = settings.MODULES[module][settings.M_URL]
+
+        base_html = BaseHTML('Сообщения', module)
+        p = base_html.get_form()
+
+        # Ссылка для возврата
+        if url_ != '':
+            ret_url = et.SubElement(p,
+                                    'a class="material-symbols-outlined" title="Возврат..."',
+                                    {
+                                        'href': url_,
+                                        'type': 'submit',
+                                        'style': 'text-decoration-color: transparent; color: #008B8B; padding: 10px;'})
+            ret_url.text = 'text_select_jump_to_beginning'
+
+        # Список сообщений(кнопки)
+        msgs = data_module.get_messages(app.get_c_prop(settings.C_USER_ID))
+        if len(msgs) == 0:
+            d = et.SubElement(p, 'label')
+            d.text = 'Записей нет'
+
+        util.log_debug(f'сообщения: {msgs}')
+        for m in msgs:
+            msg_button = et.SubElement(p, 'button', {'type': 'submit', 'name': 'btn_msg', 'value': f'{getattr(m, settings.F_TSH_STATUS)}', 'class': 'btn-msg'})
+            msg_button.text = (f'От кого: {getattr(m, settings.F_USR_NAME)}'
+                               f'Дата: {getattr(m, settings.F_MSG_CREATION_DATE)}'
+                               f'Текст: {getattr(m, settings.F_MSG_TEXT)}')
+
+        if tsh_id != '':
+            msg_info = et.SubElement(p, 'label')
+            msg_info.text = f'{tsh_id}'
+
+        return base_html.get_html()
+
+    except Exception as ex:
+        return f'Произошла ошибка при формировании html страницы (Create MSG_HTML):\n {ex}', 520  # Server Unknown Error

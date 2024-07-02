@@ -143,6 +143,7 @@ LOGOFF_BUTTON = 'logoff_btn'
 HIDEINFO_BUTTON = 'hideinfo_btn'
 DEBUG_BUTTON = 'debug_btn'
 NOTIFICATION_BUTTON = 'notification_btn'
+NOTIFICATION_MESSAGE_BUTTON = 'btn_msg'
 
 # Name для login диалога
 #
