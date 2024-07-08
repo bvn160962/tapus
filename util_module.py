@@ -5,6 +5,8 @@ import logging
 import sys
 from uuid import uuid4
 
+import settings
+
 CLIENT_OS_SUPPORTED = ('Windows', 'iPad', 'iPhone')
 
 IS_WINDOWS = (sys.platform == 'win32')
@@ -232,3 +234,18 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 print(f'logger started: {logger}')
 
+
+# Ограничение длины строки
+#
+def str_cutter(s, limit = settings.MAX_STR_LENGTH_FOR_NOTIFICATION):
+    if len(s) > limit:
+        s = f'{s[:limit - 3]}...'
+    return s
+
+
+# Формирование строки для кнопок из уведомления
+#
+def get_str_from_user_and_date(user, date):
+    user = str_cutter(user, settings.MAX_STR_LENGTH_FOR_NOTIFICATION - len(str(date)) - 1)
+    s = f'{user}{"  "*(settings.MAX_STR_LENGTH_FOR_NOTIFICATION - len(user) - len(str(date)) + 5)}{date}'
+    return s

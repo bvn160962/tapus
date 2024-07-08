@@ -1543,7 +1543,7 @@ def t_html():
 # просмотр входящих сообщений
 #
 def create_msg_html(module, tsh_id=''):
-    util.log_debug(f'tsh_id={tsh_id}')
+    util.log_tmp(f'tsh_id={tsh_id}')
 
     try:
         url_ = settings.MODULES[module][settings.M_URL]
@@ -1563,20 +1563,72 @@ def create_msg_html(module, tsh_id=''):
 
         # Список сообщений(кнопки)
         msgs = data_module.get_messages(app.get_c_prop(settings.C_USER_ID))
+
         if len(msgs) == 0:
             d = et.SubElement(p, 'label')
             d.text = 'Записей нет'
 
-        util.log_debug(f'сообщения: {msgs}')
-        for m in msgs:
-            msg_button = et.SubElement(p, 'button', {'type': 'submit', 'name': 'btn_msg', 'value': f'{getattr(m, settings.F_TSH_STATUS)}', 'class': 'btn-msg'})
-            msg_button.text = (f'От кого: {getattr(m, settings.F_USR_NAME)}'
-                               f'Дата: {getattr(m, settings.F_MSG_CREATION_DATE)}'
-                               f'Текст: {getattr(m, settings.F_MSG_TEXT)}')
+        table = et.SubElement(p, 'table', {'style': 'border-right: 0px solid gray'})
+        cnt = 0
+        fields = (
+            ['От кого:', settings.F_USR_NAME],
+            ['Дата:', settings.F_MSG_CREATION_DATE],
+            ['Сообщение:', settings.F_MSG_TEXT],
+            ['Дата исполнения:', settings.F_TSH_DATE],
+            ['Проект:', settings.F_PRJ_NAME],
+            ['Часы:', settings.F_TSH_HOURS],
+            ['Статус:', settings.F_TSH_STATUS],
+            ['Описание:', settings.F_TSH_NOTE],
+            ['Комментарий:', settings.F_TSH_COMMENT])
 
-        if tsh_id != '':
-            msg_info = et.SubElement(p, 'label')
-            msg_info.text = f'{tsh_id}'
+        rend_2_col = False
+
+        for m in msgs:
+            cnt += 1
+            row1 = et.SubElement(table, 'tr')
+            col1 = et.SubElement(row1, 'td', {'style': f'background-color: {get_row_color(cnt)}; border-right: 0px solid gray'})
+            msg_button = et.SubElement(col1, 'button',
+                                       {'style': f'white-space: pre-wrap; width: {settings.WIDTH_NOTIFICATION_BUTTON}px;',
+                                        'type': 'submit',
+                                        'name': 'btn_msg',
+                                        'value': f'{getattr(m, settings.F_TSH_ID)}',
+                                        'class': 'btn-msg'})
+            msg_button.text = (f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
+                               f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
+
+            # col2 = None
+            if cnt == 1:
+                if tsh_id != '':
+                    col2 = et.SubElement(row1, 'td',
+                                         {'style': 'border: 0px solid green; vertical-align: top; padding-left: 10',
+                                          'rowspan': f'{len(msgs)}'})
+
+            m_tsh_id = str(getattr(m, settings.F_TSH_ID))
+            util.log_tmp(f'm_tsh_id :{m_tsh_id}')
+            if tsh_id == m_tsh_id and not rend_2_col:
+                rend_2_col = True
+                row_cnt = 0
+                edt_table = et.SubElement(col2, 'table',
+                                          {'style': 'border: 2px solid gray; border-radius: 5px; position: top;padding-left: 5'})
+                for f in fields:
+                    row_cnt += 1
+                    if row_cnt <= 3:
+                        f.append(getattr(m, f[1]))
+                    else:
+                        f.append('x')
+                for f in fields:
+                    row_cnt += 1
+                    if row_cnt == 3:
+                        row_1 = et.SubElement(edt_table, 'tr', {'style': 'border: 1px dashed gray'})
+                    else:
+                        row_1 = et.SubElement(edt_table, 'tr')
+                    col_1 = et.SubElement(row_1, 'td', {'style': 'min-width: 50px; color: gray', 'align': 'right'})
+                    msg_info = et.SubElement(col_1, 'label')
+                    msg_info.text = f'{f[0]}'
+                    col_2 = et.SubElement(row_1, 'td',
+                                          {'style': 'min-width: 200; padding-left: 5px; border: 0px solid blue;'})
+                    msg_info = et.SubElement(col_2, 'label')
+                    msg_info.text = f'{f[2]}'
 
         return base_html.get_html()
 

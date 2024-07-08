@@ -520,10 +520,7 @@ def timesheets_post(values):
             if value == settings.WEEK_BUTTON_PREV:
                 return prev_week()
 
-            # Нажата кнопка сообщения
-            #
-            if value == settings.NOTIFICATION_MESSAGE_BUTTON:
-                return 'список'
+
 
         return 'Кнопка не обработана!', 404
 
@@ -657,7 +654,7 @@ def projects_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_PROJECTS)
+            html = common_buttons(value, settings.M_PROJECTS, values[value])
             if html != '':
                 return html
 
@@ -828,7 +825,7 @@ def users_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_USERS)
+            html = common_buttons(value, settings.M_USERS, values[value])
             if html != '':
                 return html
 
@@ -929,7 +926,7 @@ def approvement_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_APPROVEMENT)
+            html = common_buttons(value, settings.M_APPROVEMENT, values[value])
             if html != '':
                 return html
 
