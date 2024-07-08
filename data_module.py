@@ -58,7 +58,7 @@ def get_data(user_id=None, week=None):
 def get_entry(tsh_id=None):
     # util.log_debug(f'{prj_id}, {tsh_id}')
 
-    tsh_dict = get_timesheet_dict(tsh_id=tsh_id)
+    tsh_dict = get_timesheet_dict(tsh_id)
     return tsh_dict
 
 
@@ -103,7 +103,8 @@ def get_timesheet_dict(tsh_id):
             settings.F_TSH_NOTE: getattr(tsh_entry[0], settings.F_TSH_NOTE),
             settings.F_TSH_STATUS: getattr(tsh_entry[0], settings.F_TSH_STATUS),
             settings.F_TSH_DATE: getattr(tsh_entry[0], settings.F_TSH_DATE),
-            settings.F_TSH_COMMENT: comment
+            settings.F_TSH_COMMENT: comment,
+            settings.F_PRJ_NAME: getattr(tsh_entry[0], settings.F_PRJ_NAME),
             }
 
 
@@ -548,6 +549,11 @@ def where_project_refs(prj_id):
 
 # MESSAGES
 #
+def set_read_message(msg_id):
+    msgs = pg_module.Messages
+    msgs.set_read(msg_id)
+
+
 def add_message(msg, from_usr_id, data):
     msgs = pg_module.Messages
     msgs.add_message(msg, from_usr_id, data)

@@ -19,6 +19,7 @@ else:
 
 PG_PORT = '5432'
 PG_DATABASE = 'timesheets_db'
+# PG_DATABASE = 'test4cmlb'
 PG_USER = 'timesheets_user'
 
 
@@ -76,7 +77,11 @@ class Entries:
 
     SQL_GET_ENTRY_ID = f'Select nextval(\'entry_id\'::regclass) as {settings.F_TSH_ID}'
 
-    SQL_GET_ENTRY_BY_ID = f'Select {settings.F_TSH_ALL_ID} From ts_entries Where {settings.F_TSH_ID} = %s'
+    # SQL_GET_ENTRY_BY_ID = f'Select {settings.F_TSH_ALL_ID} From ts_entries Where {settings.F_TSH_ID} = %s'
+    SQL_GET_ENTRY_BY_ID = f'Select {settings.F_TSH_ALL_ID}, {settings.F_PRJ_NAME} '\
+                          f'From ts_entries,  ts_projects '\
+                          f'Where {settings.F_TSH_ID} = %s '\
+                          f'And {settings.F_TSH_PRJ_ID} = {settings.F_PRJ_ID}'
 
     SQL_INSERT_ENTRY = f'Insert INTO ts_entries ({settings.F_TSH_ALL_ID}) \
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)\
@@ -154,7 +159,7 @@ class Entries:
             if tsh_id is None:
                 raise Exception('entry id is None')
 
-            # util.log_debug(f'get entry by id: {tsh_id}')
+            # util.log_debug(f'get entry by id: {tsh_id}; SQL={cls.SQL_GET_ENTRY_BY_ID}')
 
             conn = get_connect()
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
@@ -686,6 +691,7 @@ class Messages:
                          f'Values (%s, %s, %s, %s)'
 
     SQL_GET_MESSAGES = f'Select {settings.F_USR_NAME},'\
+                       f'{settings.F_MSG_ID},'\
                        f'{settings.F_MSG_TEXT},'\
                        f'{settings.F_MSG_CREATION_DATE},'\
                        f'{settings.F_MSG_IS_READ},'\
@@ -715,6 +721,7 @@ class Messages:
                            f'Where msg_to_user_id = %s '\
                            f'And not msg_is_read'\
 
+    SQL_SET_READ_MESSAGE = f'Update ts_messages Set {settings.F_MSG_IS_READ} = true Where {settings.F_MSG_ID} = %s'
 
     @classmethod
     def add_message(cls, msg, from_user_id, data):
@@ -768,6 +775,25 @@ class Messages:
         except Exception as ex:
             util.log_error(f'Error on getting unread messages for user: {to_user_id}: ({ex})')
             raise ex
+
+    @classmethod
+    def set_read(cls, msg_id):
+        conn = get_connect()
+        with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+            try:
+                curs.execute(cls.SQL_SET_READ_MESSAGE, (msg_id,))
+            except Exception as ex:
+                util.log_error(f'Error on set read message : {msg_id}: ({ex})')
+                curs.execute('rollback')
+                raise ex
+
+            curs.execute('commit')
+
+
+
+
+
+
 
 
 def a(x='', **params):
