@@ -401,6 +401,10 @@ def timesheets_save(values):
                         settings.F_TSH_COMMENT: comment
                     }
                 )
+                app.set_c_prop(settings.C_TIMESHEET_ID, f'{tsh_id}')
+                # prj_id + settings.SPLITTER + settings.SPLITTER + day
+                btn_value = f'{prj_id}{settings.SPLITTER}{tsh_id}{settings.SPLITTER}'
+                app.set_c_prop(settings.C_TSH_BTN_VALUE, btn_value)
         else:
             # Существующая запись - Update
             #

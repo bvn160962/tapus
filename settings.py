@@ -254,7 +254,10 @@ def get_valid_statuses(status=None):
         }
 
     if status == EDIT_STATUS:
-        return {IN_APPROVE_STATUS: 'Согласовать'}
+        return {
+            EDIT_STATUS: 'Редактировать',
+            IN_APPROVE_STATUS: 'Согласовать'
+        }
 
     if status == IN_APPROVE_STATUS:
         return {IN_APPROVE_STATUS: 'На согласовании'}
