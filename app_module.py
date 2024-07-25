@@ -471,7 +471,7 @@ def timesheets_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_TIMESHEETS)
+            html = common_buttons(value, settings.M_TIMESHEETS, values[value])
             if html != '':
                 return html
 

@@ -1547,13 +1547,12 @@ def create_msg_html(module, obj_id='', page='notifications'):
     # Если нажата кнопка Уведомления
     #
     if page == 'notifications':
-
         msg_id = ''
         if obj_id != '':
             list = obj_id.split(settings.SPLITTER)
             obj_id = list[0]
             msg_id = list[1]
-        util.log_tmp(f'tsh_id={obj_id}; msg_id={msg_id}')
+        # util.log_tmp(f'obj_id={obj_id}; msg_id={msg_id}')
 
         try:
             url_ = settings.MODULES[module][settings.M_URL]
