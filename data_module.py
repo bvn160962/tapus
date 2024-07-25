@@ -549,6 +549,11 @@ def where_project_refs(prj_id):
 
 # MESSAGES
 #
+def delete_message(msg_id):
+    msgs = pg_module.Messages
+    msgs.delete_message(msg_id)
+
+
 def set_read_message(msg_id):
     msgs = pg_module.Messages
     msgs.set_read(msg_id)

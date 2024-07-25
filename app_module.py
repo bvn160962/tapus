@@ -471,8 +471,7 @@ def timesheets_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_TIMESHEETS, values[value])
-            util.log_tmp(f'value= {value}; values[value]={values[value]}')
+            html = common_buttons(value, settings.M_TIMESHEETS)
             if html != '':
                 return html
 
@@ -536,8 +535,6 @@ def timesheets_post(values):
             #
             if value == settings.WEEK_BUTTON_PREV:
                 return prev_week()
-
-
 
         return 'Кнопка не обработана!', 404
 
