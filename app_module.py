@@ -270,8 +270,8 @@ def notifications(module):
 
 
 # Обработчик кнопок, общих для всех модулей
-def common_buttons(value, module, tsh_id=''):
-    util.log_tmp(f'value={value}')
+def common_buttons(value, module, obj_id=''):
+    util.log_tmp(f'value={value}, user_id = {app.get_c_prop(settings.C_USER_ID)}')
     # Нажата кнопка NOTIFICATIONS
     #
     if value == settings.NOTIFICATION_BUTTON:
@@ -295,7 +295,19 @@ def common_buttons(value, module, tsh_id=''):
     # Нажата кнопка сообщения в NOTIFICATIONS
     #
     if value == settings.NOTIFICATION_MESSAGE_BUTTON:
-        return ui_module.create_msg_html(module, tsh_id)
+        return ui_module.create_msg_html(module, obj_id)
+
+    # Нажата кнопка чаты в NOTIFICATIONS
+    #
+    if value == settings.NOTIFICATION_CHARTS_BUTTON:
+        page = 'charts'
+        return ui_module.create_msg_html(module, obj_id, page)
+
+    # Нажата кнопка пользователя в чатах NOTIFICATIONS
+    #
+    if value == settings.NOTIFICATION_USER_CHART_BUTTON:
+        page = 'charts'
+        return ui_module.create_msg_html(module, obj_id, page)
 
     # Не нажата ни одна из общих кнопок
     return ''
@@ -460,6 +472,7 @@ def timesheets_post(values):
         for value in values:
             # Нажата одна из общих кнопок?
             html = common_buttons(value, settings.M_TIMESHEETS, values[value])
+            util.log_tmp(f'value= {value}; values[value]={values[value]}')
             if html != '':
                 return html
 

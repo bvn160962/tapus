@@ -146,6 +146,9 @@ HIDEINFO_BUTTON = 'hideinfo_btn'
 DEBUG_BUTTON = 'debug_btn'
 NOTIFICATION_BUTTON = 'notification_btn'
 NOTIFICATION_MESSAGE_BUTTON = 'btn_msg'
+NOTIFICATION_CHARTS_BUTTON = 'charts_btn'
+NOTIFICATION_USER_CHART_BUTTON = 'user_chart_button'
+NOTIFICATIONS_ADD_MSG_BUTTON = 'add_msg_btn'
 
 # Name для login диалога
 #
