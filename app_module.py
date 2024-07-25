@@ -242,6 +242,8 @@ def update(module):
 
 def notifications(module):
     try:
+        # data_module.add_message('comment', app.get_c_prop(settings.C_USER_ID), {'100': '102'})
+
         msgs = data_module.get_messages(app.get_c_prop(settings.C_USER_ID))
         title = 'Сообщения'
         s_list = [
@@ -271,6 +273,8 @@ def notifications(module):
 
 # Обработчик кнопок, общих для всех модулей
 def common_buttons(value, module):
+    # Нажата кнопка NOTIFICATIONS
+    #
     if value == settings.NOTIFICATION_BUTTON:
         return notifications(module)
 

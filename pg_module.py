@@ -682,12 +682,13 @@ class Parameters:
 
 
 class Messages:
+    SQL_DELETE_MESSAGE = f'Delete From ts_messages Where {settings.F_MSG_ID} = %s'
 
     SQL_INSERT_MESSAGE = f'Insert INTO ts_messages ('\
-                           f'{settings.F_MSG_FROM_USER},'\
-                           f'{settings.F_MSG_TO_USER},'\
-                           f'{settings.F_MSG_TEXT},'\
-                           f'{settings.F_MSG_TIMESHEET}) '\
+                         f'{settings.F_MSG_FROM_USER},'\
+                         f'{settings.F_MSG_TO_USER},'\
+                         f'{settings.F_MSG_TEXT},'\
+                         f'{settings.F_MSG_TIMESHEET}) '\
                          f'Values (%s, %s, %s, %s)'
 
     SQL_GET_MESSAGES = f'Select {settings.F_USR_NAME},'\
@@ -724,17 +725,33 @@ class Messages:
     SQL_SET_READ_MESSAGE = f'Update ts_messages Set {settings.F_MSG_IS_READ} = true Where {settings.F_MSG_ID} = %s'
 
     @classmethod
+    def delete_message(cls, msg_id):
+        util.log_debug(f'delete_message: {msg_id}')
+
+        conn = get_connect()
+        with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+            try:
+                curs.execute(cls.SQL_DELETE_MESSAGE, (msg_id,))
+            except Exception as ex:
+                util.log_error(f'Error on Delete Message for msg_id "{msg_id}": ({ex})')
+                curs.execute('rollback')
+                raise ex
+
+            curs.execute('commit')
+
+    @classmethod
     def add_message(cls, msg, from_user_id, data):
         # data - словарь пар {'tsh_id': 'to_user_id'}
         util.log_debug(f'add_message: msg:{msg}; from_user_id: {from_user_id}; data: {data};')
         conn = get_connect()
         with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
             try:
-                util.log_debug(f'SQL: {cls.SQL_INSERT_MESSAGE}')
+                # util.log_debug(f'SQL: {cls.SQL_INSERT_MESSAGE}')
                 for tsh_id in data:
+                    # util.log_debug(f'add_message_1: tsh_id:{tsh_id}; to_user_id: {data[tsh_id]}')
                     curs.execute(cls.SQL_INSERT_MESSAGE, (from_user_id, data[tsh_id], msg, tsh_id))
             except Exception as ex:
-                util.log_error(f'Error on Insert message: {data[2]}: ({ex})')
+                util.log_error(f'Error on Insert message: {data}: ({ex})')
                 curs.execute('rollback')
                 raise ex
 

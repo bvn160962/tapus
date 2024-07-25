@@ -7,6 +7,12 @@ DBG_USER_ROLE = 'Administrator'
 
 SHOW_EMPTY_WEEK = True
 
+# Для отправки сообщения без timesheet (фиктивный tsh_id)
+# Необходим из-за ограничения целостности в таблице ts_messages
+INTERNAL_USER_ID = '100'
+INTERNAL_PROJECT_ID = '100'
+INTERNAL_TIMESHEET_ID = '100'
+
 # Длительность ожидания ответа при проверке существования сессии Socket в секундах
 SOCKET_TEST_TIMEOUT = 0.5
 
