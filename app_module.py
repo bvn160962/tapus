@@ -263,7 +263,8 @@ def notifications(module):
                  )
             )
 
-        return ui_module.create_msg_html(module)
+        return ui_module.create_info_html(msg=msgs, module=module)
+        # return ui_module.create_msg_html(module)
 
     except Exception as ex:
         return app.response(f'{ex}', module)
@@ -275,7 +276,7 @@ def common_buttons(value, module, obj_id, values):
     # Нажата кнопка NOTIFICATIONS
     #
     if value == settings.NOTIFICATION_BUTTON:
-        return notifications(module)
+        return ui_module.create_msg_html(module)
 
     # Нажата кнопка LOGOFF
     #
