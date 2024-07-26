@@ -11,9 +11,9 @@ DB_CONNECT = None
 
 if util.IS_WINDOWS:
     # PG_HOST = '192.168.62.79'  # VM office (Bridge)
-    # PG_HOST = '192.168.225.150'  # VM country (NAT)
+    PG_HOST = '192.168.225.150'  # VM country (NAT)
     # PG_HOST = '192.168.1.219'  # VM home (Bridge)
-    PG_HOST = '127.0.0.1'    # Docker Desktop
+    # PG_HOST = '127.0.0.1'    # Docker Desktop
 else:
     PG_HOST = 'localhost'      # Cloud
 
@@ -690,20 +690,35 @@ class Messages:
                          f'{settings.F_MSG_TIMESHEET}) '\
                          f'Values (%s, %s, %s, %s)'
 
-    SQL_GET_MESSAGES = f'Select {settings.F_USR_NAME},'\
-                       f'{settings.F_MSG_ID},'\
-                       f'{settings.F_MSG_TEXT},'\
-                       f'{settings.F_MSG_CREATION_DATE},'\
-                       f'{settings.F_MSG_IS_READ},'\
-                       f'{settings.F_TSH_DATE},'\
-                       f'{settings.F_TSH_STATUS},'\
-                       f'{settings.F_TSH_NOTE},'\
-                       f'{settings.F_TSH_ID} '\
-                       f'From ts_messages, ts_users, ts_entries '\
-                       f'Where {settings.F_MSG_TO_USER} = %s '\
-                       f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
-                       f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
-                       f'Order by  {settings.F_MSG_CREATION_DATE}'
+    SQL_GET_TO_ME_MESSAGES = f'Select {settings.F_USR_NAME},'\
+                             f'{settings.F_MSG_ID},'\
+                             f'{settings.F_MSG_TEXT},'\
+                             f'{settings.F_MSG_CREATION_DATE},'\
+                             f'{settings.F_MSG_IS_READ},'\
+                             f'{settings.F_TSH_DATE},'\
+                             f'{settings.F_TSH_STATUS},'\
+                             f'{settings.F_TSH_NOTE},'\
+                             f'{settings.F_TSH_ID} '\
+                             f'From ts_messages, ts_users, ts_entries '\
+                             f'Where {settings.F_MSG_TO_USER} = %s '\
+                             f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
+                             f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
+                             f'Order by  {settings.F_MSG_CREATION_DATE}'
+
+    SQL_GET_MY_MESSAGES = f'Select {settings.F_USR_NAME},'\
+                          f'{settings.F_MSG_ID},'\
+                          f'{settings.F_MSG_TEXT},'\
+                          f'{settings.F_MSG_CREATION_DATE},'\
+                          f'{settings.F_MSG_IS_READ},'\
+                          f'{settings.F_TSH_DATE},'\
+                          f'{settings.F_TSH_STATUS},'\
+                          f'{settings.F_TSH_NOTE},'\
+                          f'{settings.F_TSH_ID} '\
+                          f'From ts_messages, ts_users, ts_entries '\
+                          f'Where {settings.F_MSG_FROM_USER} = %s '\
+                          f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
+                          f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
+                          f'Order by  {settings.F_MSG_CREATION_DATE}'
 
     SQL_GET_MESSAGES_BY_TSH_ID = f'Select u_to.{settings.F_USR_NAME} as {settings.F_MSG_TO_USER},'\
                                  f' u_from.{settings.F_USR_NAME} as {settings.F_MSG_FROM_USER},'\
@@ -757,15 +772,27 @@ class Messages:
             curs.execute('commit')
 
     @classmethod
-    def get_messages(cls, to_user_id):
+    def get_to_me_messages(cls, to_user_id):
         try:
             conn = get_connect()
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
-                curs.execute(cls.SQL_GET_MESSAGES, (to_user_id,))
+                curs.execute(cls.SQL_GET_TO_ME_MESSAGES, (to_user_id,))
                 return curs.fetchall()
 
         except Exception as ex:
-            util.log_error(f'Error on getting messages for user: {to_user_id}: ({ex})')
+            util.log_error(f'Error on getting messages to user: {to_user_id}: ({ex})')
+            raise ex
+
+    @classmethod
+    def get_my_messages(cls, from_user_id):
+        try:
+            conn = get_connect()
+            with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                curs.execute(cls.SQL_GET_MY_MESSAGES, (from_user_id,))
+                return curs.fetchall()
+
+        except Exception as ex:
+            util.log_error(f'Error on getting messages from user: {from_user_id}: ({ex})')
             raise ex
 
     @classmethod

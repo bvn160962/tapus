@@ -242,7 +242,7 @@ def update(module):
 
 def notifications(module):
     try:
-        msgs = data_module.get_messages(app.get_c_prop(settings.C_USER_ID))
+        msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
         title = 'Сообщения'
         s_list = [
             ('Пользователь', 'Текст сообщения', 'Дата', 'Прочитано', 'Ссылка'),

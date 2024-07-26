@@ -564,9 +564,14 @@ def add_message(msg, from_usr_id, data):
     msgs.add_message(msg, from_usr_id, data)
 
 
-def get_messages(to_usr_id):
+def get_to_me_messages(to_usr_id):
     msgs = pg_module.Messages
-    return msgs.get_messages(to_usr_id)
+    return msgs.get_to_me_messages(to_usr_id)
+
+
+def get_my_messages(from_usr_id):
+    msgs = pg_module.Messages
+    return msgs.get_my_messages(from_usr_id)
 
 
 def get_timesheet_messages(tsh_id):
