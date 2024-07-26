@@ -376,15 +376,7 @@ def create_info_html(i_type='', msg=(), module='', title='', url=''):
         p = base_html.get_form()
 
         # Ссылка для возврата
-        if url_ != '':
-            ret_url = et.SubElement(p,
-                                    'a class="material-symbols-outlined" title="Возврат..."',
-                                    {
-                                        'href': url_,
-                                        'type': 'submit',
-                                        'style': 'text-decoration-color: transparent; color: #008B8B; padding: 10px;'})
-            ret_url.text = 'text_select_jump_to_beginning'
-
+        comeback_link(url_, p)
 
         # MESSAGE
         h = et.SubElement(p, 'H3', {'style': 'display: inline-block; margin:7px'})
@@ -1561,31 +1553,24 @@ def create_msg_html(module, obj_id='', page='notifications'):
             p = base_html.get_form()
 
             # Ссылка для возврата
-            if url_ != '':
-                ret_url = et.SubElement(p,
-                                        'a class="material-symbols-outlined" title="Возврат..."',
-                                        {
-                                            'href': url_,
-                                            'type': 'submit',
-                                            'style': 'text-decoration-color: transparent; color: #008B8B; padding: 10px;'})
-                ret_url.text = 'text_select_jump_to_beginning'
+            comeback_link(url_, p)
 
-                # Переключение режимов Уведомления/ Чаты
-                confirmation_btn = et.SubElement(p, 'button',
-                                                 {'style': 'width: 150;'
-                                                           'background-color: transparent;'
-                                                           'border: 0px solid var(--def-color);'
-                                                           'font-weight: 900;'
-                                                           'text-decoration: underline',
-                                                           'type': 'submit',
-                                                           'name': f'{settings.NOTIFICATION_BUTTON}'})
-                confirmation_btn.text = 'Уведомления'
-                confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
-                                                                        'background-color: transparent;'
-                                                                        'border: 0px solid',
-                                                                        'type': 'submit',
-                                                                        'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
-                confirmation_btn.text = 'Чаты'
+            # Переключение режимов Уведомления/ Чаты
+            confirmation_btn = et.SubElement(p, 'button',
+                                             {'style': 'width: 150;'
+                                                       'background-color: transparent;'
+                                                       'border: 0px solid var(--def-color);'
+                                                       'font-weight: 900;'
+                                                       'text-decoration: underline',
+                                                       'type': 'submit',
+                                                       'name': f'{settings.NOTIFICATION_BUTTON}'})
+            confirmation_btn.text = 'Уведомления'
+            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
+                                                                    'background-color: transparent;'
+                                                                    'border: 0px solid',
+                                                                    'type': 'submit',
+                                                                    'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
+            confirmation_btn.text = 'Чаты'
 
             # Список сообщений(кнопки)
             msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
@@ -1597,6 +1582,7 @@ def create_msg_html(module, obj_id='', page='notifications'):
 
             table = et.SubElement(p, 'table', {'style': 'border-right: 0px solid gray'})
             cnt = 0
+            msg_props_qnt = 3
             fields = (
                 ['От кого:', settings.F_USR_NAME],
                 ['Дата:', settings.F_MSG_CREATION_DATE],
@@ -1648,27 +1634,31 @@ def create_msg_html(module, obj_id='', page='notifications'):
                                               {'style': 'border: 2px solid gray; border-radius: 5px; position: top;padding-left: 5'})
                     for f in fields:
                         row_cnt += 1
-                        if row_cnt <= 3:
+                        if row_cnt <= msg_props_qnt:
                             f.append(getattr(m, f[1]))
                         else:
                             tsh_props = data_module.get_entry(obj_id)
                             util.log_tmp(f'tsh_props: {tsh_props}')
-                            f.append(tsh_props[f[1]])
+                            if tsh_props['tsh_id'] != settings.INTERNAL_TIMESHEET_ID:
+                                f.append(tsh_props[f[1]])
+
                     for f in fields:
-                        row_cnt += 1
-                        row_1 = et.SubElement(edt_table, 'tr')
-                        col_1 = et.SubElement(row_1, 'td',
-                                              {'style': 'min-width: 50px; color: gray', 'align': 'right'})
-                        msg_info = et.SubElement(col_1, 'label')
-                        msg_info.text = f'{f[0]}'
-                        col_2 = et.SubElement(row_1, 'td',
-                                              {'style': 'min-width: 200; padding-left: 5px; border-bottom: 0px solid blue;'})
-                        msg_info = et.SubElement(col_2, 'label')
-                        msg_info.text = f'{f[2]}'
+                        if len(f) >= msg_props_qnt:
+                            row_1 = et.SubElement(edt_table, 'tr')
+                            col_1 = et.SubElement(row_1, 'td',
+                                                  {'style': 'min-width: 50px; color: gray', 'align': 'right'})
+                            msg_info = et.SubElement(col_1, 'label')
+                            msg_info.text = f'{f[0]}'
+                            col_2 = et.SubElement(row_1, 'td',
+                                                  {'style': 'min-width: 200; padding-left: 5px; border-bottom: 0px solid blue;'})
+                            msg_info = et.SubElement(col_2, 'label')
+                            msg_info.text = f'{f[2]}'
 
                     del_conf_btn = et.SubElement(col2, 'button',
-                                                 {'name': 'del_conf_btn', 'value': f'{obj_id}{settings.SPLITTER}{msg_id}'})
-                    del_conf_btn.text = 'Delete confirmation'
+                                                 {
+                                                     'name': settings.NOTIFICATIONS_DELETE_BUTTON,
+                                                     'value': f'{msg_id}'})
+                    del_conf_btn.text = 'Удалить уведомление'
 
             return base_html.get_html()
 
@@ -1686,31 +1676,24 @@ def create_msg_html(module, obj_id='', page='notifications'):
             p = base_html.get_form()
 
             # Ссылка для возврата
-            if url_ != '':
-                ret_url = et.SubElement(p,
-                                        'a class="material-symbols-outlined" title="Возврат..."',
-                                        {
-                                            'href': url_,
-                                            'type': 'submit',
-                                            'style': 'text-decoration-color: transparent; color: #008B8B; padding: 10px;'})
-                ret_url.text = 'text_select_jump_to_beginning'
+            comeback_link(url_, p)
 
-                # Переключение режимов Уведомления/ Чаты
-                confirmation_btn = et.SubElement(p, 'button',
-                                                 {'style': 'width: 150;'
-                                                           'background-color: transparent;'
-                                                           'border: 0px solid;',
-                                                  'type': 'submit',
-                                                  'name': f'{settings.NOTIFICATION_BUTTON}'})
-                confirmation_btn.text = 'Уведомления'
-                confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
-                                                                        'background-color: transparent;'
-                                                                        'border: 0px solid;'
-                                                                        'font-weight: 900;'
-                                                                        'text-decoration: underline',
-                                                                        'type': 'submit',
-                                                                        'name': 'charts_btn'})
-                confirmation_btn.text = 'Чаты'
+            # Переключение режимов Уведомления/ Чаты
+            confirmation_btn = et.SubElement(p, 'button',
+                                             {'style': 'width: 150;'
+                                                       'background-color: transparent;'
+                                                       'border: 0px solid;',
+                                              'type': 'submit',
+                                              'name': f'{settings.NOTIFICATION_BUTTON}'})
+            confirmation_btn.text = 'Уведомления'
+            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
+                                                                    'background-color: transparent;'
+                                                                    'border: 0px solid;'
+                                                                    'font-weight: 900;'
+                                                                    'text-decoration: underline',
+                                                                    'type': 'submit',
+                                                                    'name': 'charts_btn'})
+            confirmation_btn.text = 'Чаты'
 
             # Список пользователей(кнопки)
             users = data_module.get_all_users_dict()
@@ -1781,7 +1764,7 @@ def create_msg_html(module, obj_id='', page='notifications'):
                         r1 = et.SubElement(edt_table, 'tr', {'style': 'border: 0px solid green'})
                         c1 = et.SubElement(r1, 'td', {'style': 'border: 0px solid red'})
                         add_msg = et.SubElement(c1, 'textarea',
-                                                {'name': 'message',
+                                                {'name': settings.NOTIFICATION_MESSAGE,
                                                  'placeholder': 'Введите сообщение',
                                                  'class': 'message'})
                         add_msg.text = '\n'
@@ -1792,10 +1775,24 @@ def create_msg_html(module, obj_id='', page='notifications'):
                                                            'width: 20px;'
                                                            'border-radius: 10px',
                                                   'type': 'submit',
-                                                  'name': f'{settings.NOTIFICATIONS_ADD_MSG_BUTTON}'})
+                                                  'name': settings.NOTIFICATIONS_ADD_MSG_BUTTON,
+                                                  'value': f'{obj_id}'})
                         send_btn.text = 'message'
 
             return base_html.get_html()
 
         except Exception as ex:
             return f'Произошла ошибка при формировании html страницы (Create MSG_HTML):\n {ex}', 520  # Server Unknown Error
+
+
+# Формирование ссылки для возврата в текущий модуль
+#
+def comeback_link(url, p):
+    if url != '':
+        ret_url = et.SubElement(p,
+                                'a class="material-symbols-outlined" title="Возврат..."',
+                                {
+                                    'href': url,
+                                    'type': 'submit',
+                                    'style': 'text-decoration-color: transparent; color: #008B8B; padding: 10px;'})
+        ret_url.text = 'text_select_jump_to_beginning'
