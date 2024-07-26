@@ -24,6 +24,7 @@ PG_USER = 'timesheets_user'
 
 # Создать соединение с БД, если еще не установлено
 #
+
 def get_connect():
     global DB_CONNECT
 
