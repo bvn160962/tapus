@@ -249,3 +249,5 @@ def get_str_from_user_and_date(user, date):
     user = str_cutter(user, settings.MAX_STR_LENGTH_FOR_NOTIFICATION - len(str(date)) - 1)
     s = f'{user}{"  "*(settings.MAX_STR_LENGTH_FOR_NOTIFICATION - len(user) - len(str(date)) + 5)}{date}'
     return s
+
+

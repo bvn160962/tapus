@@ -270,8 +270,8 @@ def notifications(module):
 
 
 # Обработчик кнопок, общих для всех модулей
-def common_buttons(value, module, obj_id=''):
-    util.log_tmp(f'value={value}, user_id = {app.get_c_prop(settings.C_USER_ID)}')
+def common_buttons(value, module, obj_id, values):
+
     # Нажата кнопка NOTIFICATIONS
     #
     if value == settings.NOTIFICATION_BUTTON:
@@ -297,6 +297,12 @@ def common_buttons(value, module, obj_id=''):
     if value == settings.NOTIFICATION_MESSAGE_BUTTON:
         return ui_module.create_msg_html(module, obj_id)
 
+    # Нажата кнопка Удалить уведомление в NOTIFICATIONS
+    #
+    if value == settings.NOTIFICATIONS_DELETE_BUTTON:
+        data_module.delete_message(obj_id)
+        return ui_module.create_msg_html(module)
+
     # Нажата кнопка чаты в NOTIFICATIONS
     #
     if value == settings.NOTIFICATION_CHARTS_BUTTON:
@@ -307,6 +313,18 @@ def common_buttons(value, module, obj_id=''):
     #
     if value == settings.NOTIFICATION_USER_CHART_BUTTON:
         page = 'charts'
+        return ui_module.create_msg_html(module, obj_id, page)
+
+    # Нажата кнопка отправки сообщения в чатах NOTIFICATIONS
+    #
+    if value == settings.NOTIFICATIONS_ADD_MSG_BUTTON:
+        # util.log_tmp(f'text -> {values[settings.NOTIFICATION_MESSAGE]}; from ->{app.get_c_prop(settings.C_USER_ID)}; to -> {obj_id}')
+        page = 'charts'
+        data_module.add_message(
+            values[settings.NOTIFICATION_MESSAGE],
+            app.get_c_prop(settings.C_USER_ID),
+            {settings.INTERNAL_TIMESHEET_ID: obj_id}
+        )
         return ui_module.create_msg_html(module, obj_id, page)
 
     # Не нажата ни одна из общих кнопок
@@ -471,7 +489,7 @@ def timesheets_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_TIMESHEETS, values[value])
+            html = common_buttons(value, settings.M_TIMESHEETS, values[value], values)
             if html != '':
                 return html
 
@@ -668,7 +686,7 @@ def projects_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_PROJECTS, values[value])
+            html = common_buttons(value, settings.M_PROJECTS, values[value], values)
             if html != '':
                 return html
 
@@ -839,7 +857,7 @@ def users_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_USERS, values[value])
+            html = common_buttons(value, settings.M_USERS, values[value], values)
             if html != '':
                 return html
 
@@ -940,7 +958,7 @@ def approvement_post(values):
     try:
         for value in values:
             # Нажата одна из общих кнопок?
-            html = common_buttons(value, settings.M_APPROVEMENT, values[value])
+            html = common_buttons(value, settings.M_APPROVEMENT, values[value], values)
             if html != '':
                 return html
 

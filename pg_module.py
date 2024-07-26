@@ -747,7 +747,7 @@ class Messages:
             try:
                 # util.log_debug(f'SQL: {cls.SQL_INSERT_MESSAGE}')
                 for tsh_id in data:
-                    # util.log_debug(f'add_message_1: tsh_id:{tsh_id}; to_user_id: {data[tsh_id]}')
+                    util.log_debug(f'add_message_1: tsh_id:{tsh_id}; to_user_id: {data[tsh_id]}')
                     curs.execute(cls.SQL_INSERT_MESSAGE, (from_user_id, data[tsh_id], msg, tsh_id))
             except Exception as ex:
                 util.log_error(f'Error on Insert message: {data}: ({ex})')
