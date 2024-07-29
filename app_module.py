@@ -298,11 +298,17 @@ def common_buttons(value, module, obj_id, values):
     if value == settings.NOTIFICATION_MESSAGE_BUTTON:
         return ui_module.create_msg_html(module, obj_id)
 
-    # Нажата кнопка Удалить уведомление в NOTIFICATIONS
+    # Нажата кнопка удалить уведомление в NOTIFICATIONS
     #
     if value == settings.NOTIFICATIONS_DELETE_BUTTON:
         data_module.delete_message(obj_id)
         return ui_module.create_msg_html(module)
+
+    # Нажата кнопка исходящие в NOTIFICATIONS
+    #
+    if value == settings.NOTIFICATION_OUTBOX_BUTTON:
+        page = 'outbox'
+        return ui_module.create_msg_html(module, obj_id, page)
 
     # Нажата кнопка чаты в NOTIFICATIONS
     #
