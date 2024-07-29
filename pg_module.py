@@ -699,13 +699,15 @@ class Messages:
                             f'{settings.F_TSH_DATE},'\
                             f'{settings.F_TSH_STATUS},'\
                             f'{settings.F_TSH_NOTE},'\
-                            f'{settings.F_TSH_ID} '\
+                            f'{settings.F_TSH_ID},'\
+                            f'{settings.F_MSG_FROM_USER},'\
+                            f'{settings.F_MSG_TO_USER} '\
                             f'From ts_messages, ts_users, ts_entries '\
-                            f'Where {settings.F_MSG_TO_USER} = %s '\
-                            f'And {settings.F_MSG_FROM_USER} = %s '\
+                            f'Where (({settings.F_MSG_TO_USER} = %s And {settings.F_MSG_FROM_USER} = %s) '\
+                            f'Or ({settings.F_MSG_FROM_USER} = %s And {settings.F_MSG_TO_USER} = %s))'\
                             f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
                             f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
-                            f'Order by {settings.F_MSG_CREATION_DATE}'
+                            f'Order by {settings.F_MSG_CREATION_DATE}, {settings.F_MSG_ID}'
 
     SQL_GET_TO_ME_MESSAGES = f'Select {settings.F_USR_NAME},'\
                              f'{settings.F_MSG_ID},'\
@@ -720,7 +722,7 @@ class Messages:
                              f'Where {settings.F_MSG_TO_USER} = %s '\
                              f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
                              f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
-                             f'Order by {settings.F_MSG_CREATION_DATE}'
+                             f'Order by {settings.F_MSG_CREATION_DATE}, {settings.F_MSG_ID}'
 
     SQL_GET_MY_MESSAGES = f'Select {settings.F_USR_NAME},'\
                           f'{settings.F_MSG_ID},'\
@@ -735,7 +737,7 @@ class Messages:
                           f'Where {settings.F_MSG_FROM_USER} = %s '\
                           f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
                           f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
-                          f'Order by {settings.F_MSG_CREATION_DATE}'
+                          f'Order by {settings.F_MSG_CREATION_DATE}, {settings.F_MSG_ID}'
 
     SQL_GET_MESSAGES_BY_TSH_ID = f'Select u_to.{settings.F_USR_NAME} as {settings.F_MSG_TO_USER},'\
                                  f' u_from.{settings.F_USR_NAME} as {settings.F_MSG_FROM_USER},'\
@@ -746,7 +748,7 @@ class Messages:
                                  f'Where {settings.F_MSG_TIMESHEET} = %s '\
                                  f'And {settings.F_MSG_TO_USER} = u_to.{settings.F_USR_ID} '\
                                  f'And {settings.F_MSG_FROM_USER} = u_from.{settings.F_USR_ID} '\
-                                 f'Order by {settings.F_MSG_CREATION_DATE}'
+                                 f'Order by {settings.F_MSG_CREATION_DATE}, {settings.F_MSG_ID}'
 
     SQL_GET_UNREAD_COUNT = f'Select count(*) '\
                            f'From ts_messages '\
@@ -793,11 +795,11 @@ class Messages:
         try:
             conn = get_connect()
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
-                curs.execute(cls.SQL_GET_CHAT_MESSAGES, (to_user_id, from_user_id))
+                curs.execute(cls.SQL_GET_CHAT_MESSAGES, (to_user_id, from_user_id, to_user_id, from_user_id))
                 return curs.fetchall()
 
         except Exception as ex:
-            util.log_error(f'Error on getting messages to user: {to_user_id}; from user: {from_user_id}: ({ex})')
+            util.log_error(f'Error on getting chat messages user: {to_user_id}; with user: {from_user_id}: ({ex})')
             raise ex
 
     @classmethod
