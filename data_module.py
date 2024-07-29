@@ -564,6 +564,11 @@ def add_message(msg, from_usr_id, data):
     msgs.add_message(msg, from_usr_id, data)
 
 
+def get_chat_messages(to_usr_id, from_user_id):
+    msgs = pg_module.Messages
+    return msgs.get_chat_messages(to_usr_id, from_user_id)
+
+
 def get_to_me_messages(to_usr_id):
     msgs = pg_module.Messages
     return msgs.get_to_me_messages(to_usr_id)
