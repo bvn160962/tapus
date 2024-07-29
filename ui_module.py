@@ -1574,7 +1574,6 @@ def create_msg_html(module, obj_id='', page='notifications'):
 
             # Список сообщений(кнопки)
             msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
-            # msgs = data_module.get_my_messages(app.get_c_prop(settings.C_USER_ID))
 
             if len(msgs) == 0:
                 d = et.SubElement(p, 'label')
