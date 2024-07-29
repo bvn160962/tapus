@@ -958,7 +958,6 @@ def create_timesheet_html(err_message=''):
                     settings.F_TSH_STATUS: '',  #settings.EDIT_STATUS,
                     settings.F_TSH_DATE: tsh_date
                 }
-
         else:  # кнопка на дату с данными
             tsh_entry = data_module.get_entry(tsh_id)
             if tsh_entry is None:
@@ -1575,6 +1574,7 @@ def create_msg_html(module, obj_id='', page='notifications'):
             # Список сообщений(кнопки)
             msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
             # msgs = data_module.get_my_messages(app.get_c_prop(settings.C_USER_ID))
+            # msgs = data_module.get_chat_messages('101', '102')
 
             if len(msgs) == 0:
                 d = et.SubElement(p, 'label')
@@ -1713,7 +1713,7 @@ def create_msg_html(module, obj_id='', page='notifications'):
                                             'name': f'{settings.NOTIFICATION_USER_CHART_BUTTON}',
                                             'value': f'{user}',
                                             'class': 'btn-msg'})
-                user_chart_button.text = (f'{users[user]['usr_name']}')
+                user_chart_button.text = (f"{users[user]['usr_name']}")
 
                 if cnt == 1:
                     if obj_id != '':
