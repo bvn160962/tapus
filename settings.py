@@ -1,6 +1,6 @@
 #
 # Для отладки - вход без регистрации
-DBG_DO_LOGIN = False
+DBG_DO_LOGIN = True
 DBG_USER_ID = 102
 DBG_USER_NAME = 'user'
 DBG_USER_ROLE = 'Administrator'

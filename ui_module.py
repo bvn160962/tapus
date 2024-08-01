@@ -1579,15 +1579,10 @@ def t_html():
 #
 def create_msg_html(module, obj_id='', page='notifications'):
 
-    # Если нажата кнопка Уведомления
+    # Если нажата кнопка Уведомления или Исходящие в Уведомлениях
     #
-    if page == 'notifications':
-        return add_notifications(module, obj_id)
-
-    # Если нажата кнопка Исходящие
-    #
-    if page == 'outbox':
-        return add_notifications_outbox(module, obj_id)
+    if page == 'notifications' or page == 'outbox':
+        return add_notifications(module, obj_id, page)
 
     # Если нажата кнопка Чаты
     #
@@ -1608,9 +1603,9 @@ def comeback_link(url, p):
         ret_url.text = 'text_select_jump_to_beginning'
 
 
-#  Формируем вкладку Уведомления для NOTIFICATIONS
+#  Формируем вкладку Уведомления или Исходящие для NOTIFICATIONS
 #
-def add_notifications(module, obj_id=''):
+def add_notifications(module, obj_id='', page='notifications'):
     msg_id = ''
     if obj_id != '':
         id_list = obj_id.split(settings.SPLITTER)
@@ -1628,175 +1623,61 @@ def add_notifications(module, obj_id=''):
         comeback_link(url_, p)
 
         # Переключение режимов Уведомления/ Чаты
-        confirmation_btn = et.SubElement(p, 'button',
-                                         {'style': 'width: 150;'
-                                                   'background-color: transparent;'
-                                                   'border: 0px solid var(--def-color);'
-                                                   'font-weight: 900;'
-                                                   'text-decoration: underline',
-                                          'type': 'submit',
-                                          'name': f'{settings.NOTIFICATION_BUTTON}'})
-        confirmation_btn.text = 'Уведомления'
-        confirmation_btn = et.SubElement(p, 'button',
-                                         {'style': 'width: 150;'
-                                                   'background-color: transparent;'
-                                                   'border: 0px solid var(--def-color);',
-                                          'type': 'submit',
-                                          'name': f'{settings.NOTIFICATION_OUTBOX_BUTTON}'})
-        confirmation_btn.text = 'Исходящие'
-        confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
-                                                                'background-color: transparent;'
-                                                                'border: 0px solid',
-                                                       'type': 'submit',
-                                                       'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
-        confirmation_btn.text = 'Чаты'
+        if page == 'notifications':
+            confirmation_btn = et.SubElement(p, 'button',
+                                             {'style': 'width: 150;'
+                                                       'background-color: transparent;'
+                                                       'border: 0px solid var(--def-color);'
+                                                       'font-weight: 900;'
+                                                       'text-decoration: underline',
+                                              'type': 'submit',
+                                              'name': f'{settings.NOTIFICATION_BUTTON}'})
+            confirmation_btn.text = 'Уведомления'
+            confirmation_btn = et.SubElement(p, 'button',
+                                             {'style': 'width: 150;'
+                                                       'background-color: transparent;'
+                                                       'border: 0px solid var(--def-color);',
+                                              'type': 'submit',
+                                              'name': f'{settings.NOTIFICATION_OUTBOX_BUTTON}'})
+            confirmation_btn.text = 'Исходящие'
+            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
+                                                                    'background-color: transparent;'
+                                                                    'border: 0px solid',
+                                                           'type': 'submit',
+                                                           'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
+            confirmation_btn.text = 'Чаты'
 
-        # Список сообщений(кнопки)
-        msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
-        # msgs = data_module.get_my_messages(app.get_c_prop(settings.C_USER_ID))
-        # msgs = data_module.get_chat_messages('101', '102')
+            # Список сообщений(кнопки)
+            msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
+            # msgs = data_module.get_my_messages(app.get_c_prop(settings.C_USER_ID))
 
-        if len(msgs) == 0:
-            d = et.SubElement(p, 'label')
-            d.text = 'Записей нет'
+        elif page == 'outbox':
+            confirmation_btn = et.SubElement(p, 'button',
+                                             {'style': 'width: 150;'
+                                                       'background-color: transparent;'
+                                                       'border: 0px solid var(--def-color);',
+                                              'type': 'submit',
+                                              'name': f'{settings.NOTIFICATION_BUTTON}'})
+            confirmation_btn.text = 'Уведомления'
+            confirmation_btn = et.SubElement(p, 'button',
+                                             {'style': 'width: 150;'
+                                                       'background-color: transparent;'
+                                                       'border: 0px solid var(--def-color);'
+                                                       'font-weight: 900;'
+                                                       'text-decoration: underline',
+                                              'type': 'submit',
+                                              'name': f'{settings.NOTIFICATION_OUTBOX_BUTTON}'})
+            confirmation_btn.text = 'Исходящие'
+            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
+                                                                    'background-color: transparent;'
+                                                                    'border: 0px solid',
+                                                           'type': 'submit',
+                                                           'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
+            confirmation_btn.text = 'Чаты'
 
-        table = et.SubElement(p, 'table', {'style': 'border-right: 0px solid gray'})
-        cnt = 0
-        msg_props_qnt = 3
-        fields = (
-            ['От кого:', settings.F_USR_NAME],
-            ['Дата:', settings.F_MSG_CREATION_DATE],
-            ['Сообщение:', settings.F_MSG_TEXT],
-            ['Дата исполнения:', settings.F_TSH_DATE],
-            ['Проект:', settings.F_PRJ_NAME],
-            ['Часы:', settings.F_TSH_HOURS],
-            ['Статус:', settings.F_TSH_STATUS],
-            ['Описание:', settings.F_TSH_NOTE],
-            ['Комментарий:', settings.F_TSH_COMMENT])
-
-        rend_2_col = False
-
-        for m in msgs:
-            m_tsh_id = str(getattr(m, settings.F_TSH_ID))
-            m_msg_id = str(getattr(m, settings.F_MSG_ID))
-            cnt += 1
-            row1 = et.SubElement(table, 'tr')
-            col1 = et.SubElement(row1, 'td', {'style': f'background-color: {get_row_color(cnt)}'})
-            if obj_id == m_tsh_id and msg_id == m_msg_id:
-                msg_button = et.SubElement(col1, 'button',
-                                           {
-                                               'style': f'white-space: pre-wrap; width: {settings.WIDTH_NOTIFICATION_BUTTON}px; border: 3px solid var(--def-color);',
-                                               'type': 'submit',
-                                               'name': 'btn_msg',
-                                               'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
-                                               'class': 'btn-msg'})
-            else:
-                msg_button = et.SubElement(col1, 'button',
-                                           {
-                                               'style': f'white-space: pre-wrap; width: {settings.WIDTH_NOTIFICATION_BUTTON}px;',
-                                               'type': 'submit',
-                                               'name': 'btn_msg',
-                                               'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
-                                               'class': 'btn-msg'})
-            msg_button.text = (
-                f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
-                f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
-
-            if cnt == 1:
-                if obj_id != '':
-                    col2 = et.SubElement(row1, 'td',
-                                         {'style': 'border: 0px solid green; vertical-align: top; padding-left: 10',
-                                          'rowspan': f'{len(msgs)}'})
-
-            util.log_tmp(f'm_tsh_id :{m_tsh_id}')
-            if obj_id == m_tsh_id and msg_id == m_msg_id and not rend_2_col:
-                rend_2_col = True
-                row_cnt = 0
-                edt_table = et.SubElement(col2, 'table',
-                                          {
-                                              'style': 'border: 2px solid gray; border-radius: 5px; position: top;padding-left: 5'})
-                for f in fields:
-                    row_cnt += 1
-                    if row_cnt <= msg_props_qnt:
-                        f.append(getattr(m, f[1]))
-                    else:
-                        tsh_props = data_module.get_entry(obj_id)
-                        util.log_tmp(f'tsh_props: {tsh_props}')
-                        if tsh_props['tsh_id'] != settings.INTERNAL_TIMESHEET_ID:
-                            f.append(tsh_props[f[1]])
-
-                for f in fields:
-                    if len(f) >= msg_props_qnt:
-                        row_1 = et.SubElement(edt_table, 'tr')
-                        col_1 = et.SubElement(row_1, 'td',
-                                              {'style': 'min-width: 50px; color: gray', 'align': 'right'})
-                        msg_info = et.SubElement(col_1, 'label')
-                        msg_info.text = f'{f[0]}'
-                        col_2 = et.SubElement(row_1, 'td',
-                                              {
-                                                  'style': 'min-width: 200; padding-left: 5px; border-bottom: 0px solid blue;'})
-                        msg_info = et.SubElement(col_2, 'label')
-                        msg_info.text = f'{f[2]}'
-
-                del_conf_btn = et.SubElement(col2, 'button',
-                                             {
-                                                 'name': settings.NOTIFICATIONS_DELETE_BUTTON,
-                                                 'value': f'{msg_id}'})
-                del_conf_btn.text = 'Удалить уведомление'
-
-        return base_html.get_html()
-
-    except Exception as ex:
-        return f'Произошла ошибка при формировании html страницы (Create MSG_HTML):\n {ex}', 520  # Server Unknown Error
-
-
-# Формируем вкладку Исходящие для NOTIFICATIONS
-#
-def add_notifications_outbox(module, obj_id):
-    msg_id = ''
-    if obj_id != '':
-        id_list = obj_id.split(settings.SPLITTER)
-        obj_id = id_list[0]
-        msg_id = id_list[1]
-    # util.log_tmp(f'obj_id={obj_id}; msg_id={msg_id}')
-
-    try:
-        url_ = settings.MODULES[module][settings.M_URL]
-
-        base_html = BaseHTML('Сообщения', module)
-        p = base_html.get_form()
-
-        # Ссылка для возврата
-        comeback_link(url_, p)
-
-        # Переключение режимов Уведомления/ Чаты
-        confirmation_btn = et.SubElement(p, 'button',
-                                         {'style': 'width: 150;'
-                                                   'background-color: transparent;'
-                                                   'border: 0px solid var(--def-color);',
-                                          'type': 'submit',
-                                          'name': f'{settings.NOTIFICATION_BUTTON}'})
-        confirmation_btn.text = 'Уведомления'
-        confirmation_btn = et.SubElement(p, 'button',
-                                         {'style': 'width: 150;'
-                                                   'background-color: transparent;'
-                                                   'border: 0px solid var(--def-color);'
-                                                   'font-weight: 900;'
-                                                   'text-decoration: underline',
-                                          'type': 'submit',
-                                          'name': f'{settings.NOTIFICATION_OUTBOX_BUTTON}'})
-        confirmation_btn.text = 'Исходящие'
-        confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
-                                                                'background-color: transparent;'
-                                                                'border: 0px solid',
-                                                       'type': 'submit',
-                                                       'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
-        confirmation_btn.text = 'Чаты'
-
-        # Список сообщений(кнопки)
-        # msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
-        msgs = data_module.get_my_messages(app.get_c_prop(settings.C_USER_ID))
-        # msgs = data_module.get_chat_messages('101', '102')
+            # Список сообщений(кнопки)
+            # msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
+            msgs = data_module.get_my_messages(app.get_c_prop(settings.C_USER_ID))
 
         if len(msgs) == 0:
             d = et.SubElement(p, 'label')
@@ -1959,18 +1840,25 @@ def add_notifications_chats(module, obj_id=''):
                                                   'style': 'border: 0px solid gray; border-radius: 5px; position: top;padding-left: 5'})
 
                     # тут будет fields присвоено значение через ф-цию в дата модуле
-                    fields = [
-                        [f'{obj_id}', 'Привет'],
-                        ['You', 'Привет'],
-                        [f'{obj_id}', 'Согласуй'],
-                        ['You', 'Нет'],
-                        ['You', 'Жирно будет'],
-                        [f'{obj_id}', 'Почему?'],
-                        ['You', 'Ты занимался ерундой, слишком много лалалала аплалдадсад']
-                    ]
+                    msgs = data_module.get_chat_messages(obj_id, app.get_c_prop(settings.C_USER_ID))
+                    fields = []
+                    for m in msgs:
+                        f = [m[10], m[2]]
+                        fields.append(f)
+                        util.log_tmp(f'msgs: {msgs}')
+                    util.log_tmp(f'cписок сообщений списком---> {fields}')
+                    # fields = [
+                    #     [f'{obj_id}', 'Привет'],
+                    #     ['You', 'Привет'],
+                    #     [f'{obj_id}', 'Согласуй'],
+                    #     ['You', 'Нет'],
+                    #     ['You', 'Жирно будет'],
+                    #     [f'{obj_id}', 'Почему?'],
+                    #     ['You', 'Ты занимался ерундой, слишком много лалалала аплалдадсад']
+                    # ]
 
                     for f in fields:
-                        if f[0] == obj_id:
+                        if f[0] == app.get_c_prop(settings.C_USER_ID):
                             row_1 = et.SubElement(edt_table, 'tr')
                             col_1 = et.SubElement(row_1, 'td',
                                                   {'style': 'width: 300px;', 'align': 'left'})
