@@ -266,7 +266,7 @@ def login(module):
         #
         if request.method == 'GET':
             # util.log_info(f'login.GET: {glob_module.get_session_list()}')
-            print_cache()
+            # print_cache()
 
             if settings.DBG_DO_LOGIN:  # Показать логин
                 return ui_module.create_login_html('', module)
@@ -276,7 +276,7 @@ def login(module):
                     set_c_prop(settings.C_USER_ID, settings.DBG_USER_ID)
                     set_c_prop(settings.C_USER_NAME, settings.DBG_USER_NAME)
                     set_c_prop(settings.C_USER_ROLE, settings.DBG_USER_ROLE)
-                    print_cache()
+                    # print_cache()
 
                     return redirect(url_for(module))
                 else:

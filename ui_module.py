@@ -28,7 +28,11 @@ FORM_HEIGHT = '500px'
 
 # Стили общих кнопок в заголовке
 h_btn_tag = 'button class="material-symbols-outlined right btn-t-cell"'
-h_btn_style = 'padding-inline: 0px; margin-left: 0; margin-right: 0; margin-right: 3px'
+h_btn_style = 'padding-inline: 0px; margin-left: 0; margin-right: 3px'
+
+# Стили обычных кнопок
+c_btn_tag = 'button class="material-symbols-outlined btn-icon"'
+c_btn_style = 'position: relative; top: 7px;'
 
 
 class BaseHTML:
@@ -667,28 +671,52 @@ def add_timesheets_info(base_html, tsh_entry=None, notifications=()):
     col = et.SubElement(row, 'td colspan="5" align="center"')  # Объединенная ячейка
 
     # Кнопка Текущая неделя
-    btn = et.SubElement(col, 'button title="Текущая неделя" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_CURRENT})
-    i = et.SubElement(btn, 'i class="fa fa-calendar fa-lg" aria-hidden="true"')
-    i.text = '\n'
+    btn = et.SubElement(col, f'{c_btn_tag} title="Текущая неделя"',{'name': settings.WEEK_BUTTON_CURRENT, 'style': c_btn_style})
+    btn.text = 'event'
+    # Awesome icon
+    # btn = et.SubElement(col, 'button title="Текущая неделя" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_CURRENT})
+    # i = et.SubElement(btn, 'i class="fa fa-calendar fa-lg" aria-hidden="true"')
+    # i.text = '\n'
 
     # Кнопка Назад
-    btn = et.SubElement(col, 'button title="Предыдущая неделя" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_PREV})
-    i = et.SubElement(btn, 'i class="fa fa-arrow-circle-o-left fa-lg" aria-hidden="true"')
-    i.text = '\n'
+    btn = et.SubElement(col, f'{c_btn_tag} title="Предыдущая неделя"',{'name': settings.WEEK_BUTTON_PREV, 'style': c_btn_style})
+    btn.text = 'chevron_left'
+    # Awesome icon
+    # btn = et.SubElement(col, 'button title="Предыдущая неделя" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_PREV})
+    # i = et.SubElement(btn, 'i class="fa fa-arrow-circle-o-left fa-lg" aria-hidden="true"')
+    # i.text = '\n'
 
     # Кнопка Вперед
-    btn = et.SubElement(col, 'button title="Следующая неделя" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_NEXT})
-    i = et.SubElement(btn, 'i class="fa fa-arrow-circle-o-right fa-lg" aria-hidden="true"')
-    i.text = '\n'
+    btn = et.SubElement(col, f'{c_btn_tag} title="Следующая неделя"',{'name': settings.WEEK_BUTTON_NEXT, 'style': c_btn_style})
+    btn.text = 'chevron_right'
+    # Awesome icon
+    # btn = et.SubElement(col, 'button title="Следующая неделя" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_NEXT})
+    # i = et.SubElement(btn, 'i class="fa fa-arrow-circle-o-right fa-lg" aria-hidden="true"')
+    # i.text = '\n'
 
     # Календарь
     # util.log_debug(f'week html={week}; {type(week)}')
-    et.SubElement(col, settings.TAG_INPUT, attrib={'type': 'week', 'name': INPUT_WEEK_NAME, 'value': week, 'style': 'border-radius: 10px; margin: 0px 0px 5px 5px;'})
+    et.SubElement(col, settings.TAG_INPUT, attrib={'type': 'week', 'name': INPUT_WEEK_NAME, 'value': week, 'style': 'border-radius: 10px; margin: 0px 7px 5px 7px;'})
 
-    # Кнопка Применить
-    btn = et.SubElement(col, 'button title="Выбрать неделю" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_SELECT})
-    i = et.SubElement(btn, 'i class="fa fa-arrow-circle-o-down fa-lg" aria-hidden="true"')
-    i.text = '\n'
+    # Кнопка Применить выбранную неделю
+    btn = et.SubElement(col, f'{c_btn_tag} title="Выбрать неделю"',{'name': settings.WEEK_BUTTON_SELECT, 'style': c_btn_style})
+    btn.text = 'event_available'
+    # Awesome icon
+    # btn = et.SubElement(col, 'button title="Выбрать неделю" class="btn-icon"', attrib={'type': 'submit', 'name': settings.WEEK_BUTTON_SELECT})
+    # i = et.SubElement(btn, 'i class="fa fa-arrow-circle-o-down fa-lg" aria-hidden="true"')
+    # i.text = '\n'
+
+    # Разделитель на панели кнопок
+    splitter = et.SubElement(col, 'label', {'style': 'margin-left: 25; margin-right: 15'})
+    # splitter.text = '|'
+
+    # Кнопка Копировать атрибуты
+    btn = et.SubElement(col, f'{c_btn_tag} title="Копировать атрибуты текущей записи"',{'name': settings.COPY_ATTRIBUTES_BUTTON, 'style': c_btn_style})
+    btn.text = 'content_copy'
+
+    # Кнопка Заполнить атрибуты
+    btn = et.SubElement(col, f'{c_btn_tag} title="Заполнить атрибуты текущей записи"',{'name': settings.PASTE_ATTRIBUTES_BUTTON, 'style': c_btn_style})
+    btn.text = 'content_paste'
 
     # HEADERS ROW
     #
@@ -872,7 +900,7 @@ def add_timesheet_table(data, column):
                         hours = '0'
                     else:
                         # existing timesheet button
-                        btn_value = prj_id + settings.SPLITTER + tsh_id + settings.SPLITTER
+                        btn_value = prj_id + settings.SPLITTER + tsh_id + settings.SPLITTER + day
                         hours = time_sheets[tsh_id][settings.F_TSH_HOURS]
                         note = time_sheets[tsh_id][settings.F_TSH_NOTE]
                         comment = time_sheets[tsh_id][settings.F_TSH_COMMENT]
@@ -944,25 +972,41 @@ def add_timesheet_table(data, column):
                     btn_node.text = '0'
 
 
-def create_timesheet_html(err_message=''):
+def create_timesheet_html(err_message='', values=None):
     try:
         tsh_id = app.get_c_prop(settings.C_TIMESHEET_ID)
         tsh_date = app.get_c_prop(settings.C_DATE)
 
         # Формируем атрибуты записи
-        if tsh_id == '':  # нажата пустая кнопка на дату
+        if values is not None:  # Режим вставки значений из кэша
+            # Определить статус
+            if tsh_id != '':  # При вставке в существующую запись - текущий статус
+                status = values[SELECT_STATUS_NAME]
+            else:  # При вставке в новую запись - всегда редактирование
+                status = settings.EDIT_STATUS
+
+            # Сформировать атрибуты
             tsh_entry = {
-                    settings.F_TSH_HOURS: '',
-                    settings.F_TSH_NOTE: '',
-                    settings.F_TSH_COMMENT: '',
-                    settings.F_TSH_STATUS: '',  #settings.EDIT_STATUS,
-                    settings.F_TSH_DATE: tsh_date
-                }
-        else:  # кнопка на дату с данными
-            tsh_entry = data_module.get_entry(tsh_id)
-            if tsh_entry is None:
-                msg = f'create_timesheet_html: Запись tsh_id="{tsh_id}" не найдена в базе данных'
-                return app.response(msg)  # Пока еще не сформирован html!!!
+                settings.F_TSH_HOURS: app.get_c_prop(settings.C_HOUR_VALUE),
+                settings.F_TSH_NOTE: app.get_c_prop(settings.C_NOTE_VALUE),
+                settings.F_TSH_COMMENT: app.get_c_prop(settings.C_COMMENT_VALUE),
+                settings.F_TSH_STATUS: status,
+                settings.F_TSH_DATE: tsh_date
+            }
+        else:
+            if tsh_id == '':  # нажата пустая кнопка на дату
+                tsh_entry = {
+                        settings.F_TSH_HOURS: '',
+                        settings.F_TSH_NOTE: '',
+                        settings.F_TSH_COMMENT: '',
+                        settings.F_TSH_STATUS: '',
+                        settings.F_TSH_DATE: tsh_date
+                    }
+            else:  # кнопка на дату с данными
+                tsh_entry = data_module.get_entry(tsh_id)
+                if tsh_entry is None:
+                    msg = f'create_timesheet_html: Запись tsh_id="{tsh_id}" не найдена в базе данных'
+                    return app.response(msg)  # Пока еще не сформирован html!!!
 
         # Формируем список сообщений по tsh_id
         if use_notifications_dialog() and tsh_id != '':

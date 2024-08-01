@@ -177,6 +177,7 @@ def debug(module):
         ('Имя переменной', 'Значение'),
 
         ('*** CACHE ***', ''),
+        (settings.C_CLIENT_OS_TYPE, str(app.get_c_prop(settings.C_CLIENT_OS_TYPE))),
         (settings.C_WEEK, str(app.get_c_prop(settings.C_WEEK))),
         (settings.C_DATE, str(app.get_c_prop(settings.C_DATE))),
         (settings.C_TIMESHEET_ID, str(app.get_c_prop(settings.C_TIMESHEET_ID))),
@@ -185,7 +186,10 @@ def debug(module):
         (settings.C_USER_ID, str(app.get_c_prop(settings.C_USER_ID))),
         (settings.C_USER_NAME, str(app.get_c_prop(settings.C_USER_NAME))),
         (settings.C_USER_ROLE, str(app.get_c_prop(settings.C_USER_ROLE))),
-        (settings.C_CLIENT_OS_TYPE, str(app.get_c_prop(settings.C_CLIENT_OS_TYPE))),
+        (settings.C_HOUR_VALUE, str(app.get_c_prop(settings.C_HOUR_VALUE))),
+        (settings.C_NOTE_VALUE, str(app.get_c_prop(settings.C_NOTE_VALUE))),
+        (settings.C_COMMENT_VALUE, str(app.get_c_prop(settings.C_COMMENT_VALUE))),
+        (settings.C_STATUS_VALUE, str(app.get_c_prop(settings.C_STATUS_VALUE))),
 
         ('*** SETTINGS ***', ''),
         ('DBG_DO_LOGIN', str(settings.DBG_DO_LOGIN)),
@@ -228,7 +232,7 @@ def update(module):
     try:
         app.clear_timesheet()
         app.set_c_prop(settings.C_WEEK, util.get_week())
-        app.print_cache()
+        # app.print_cache()
 
         pg_module.DB_CONNECT = None
 
@@ -340,7 +344,7 @@ def common_buttons(value, module, obj_id, values):
 
 # TIMESHEETS BLOCK
 #
-def timesheets_select(value=''):
+def timesheets_select(value):
     # util.log_debug(f'Нажата кнопка в Таблице: {value}')
 
     # Разбор значения value (prj_id#tsh_id#date)
@@ -386,6 +390,24 @@ def prev_week():
     week = app.get_c_prop(settings.C_WEEK)
     app.set_c_prop(settings.C_WEEK, util.shift_week(week, False))
     return ui_module.create_timesheet_html()
+
+
+def copy_attributes(values):
+    # util.log_debug(f'Нажата кнопка Copy Attributes: {values}')
+
+    app.set_c_prop(settings.C_HOUR_VALUE, values[ui_module.INPUT_HOURS_NAME])
+    app.set_c_prop(settings.C_NOTE_VALUE, values[ui_module.INPUT_NOTE_NAME])
+    app.set_c_prop(settings.C_COMMENT_VALUE, values[ui_module.INPUT_COMMENT_NAME])
+    app.set_c_prop(settings.C_STATUS_VALUE, values[ui_module.SELECT_STATUS_NAME])
+
+    # app.print_cache()
+
+    return ui_module.create_timesheet_html()
+
+
+def paste_attributes(values):
+    # util.log_debug(f'Нажата кнопка Paste Attributes')
+    return ui_module.create_timesheet_html(values=values)
 
 
 def timesheets_save(values):
@@ -560,6 +582,16 @@ def timesheets_post(values):
             #
             if value == settings.WEEK_BUTTON_PREV:
                 return prev_week()
+
+            # Нажата кнопка COPY ATTRIBUTES
+            #
+            if value == settings.COPY_ATTRIBUTES_BUTTON:
+                return copy_attributes(values)
+
+            # Нажата кнопка PASTE ATTRIBUTES
+            #
+            if value == settings.PASTE_ATTRIBUTES_BUTTON:
+                return paste_attributes(values)
 
         return 'Кнопка не обработана!', 404
 

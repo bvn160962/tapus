@@ -128,6 +128,10 @@ C_DATE = 'c_date'
 C_WEEK = 'c_week'
 C_TSH_BTN_VALUE = 'c_tsh_btn_value'
 C_CLIENT_OS_TYPE = 'c_client_os_type'
+C_HOUR_VALUE = 'c_hour_value'
+C_NOTE_VALUE = 'c_note_value'
+C_COMMENT_VALUE = 'c_comment_value'
+C_STATUS_VALUE = 'c_status_value'
 
 # Name для кнопок
 #
@@ -157,6 +161,8 @@ NOTIFICATION_CHARTS_BUTTON = 'charts_btn'
 NOTIFICATION_USER_CHART_BUTTON = 'user_chart_button'
 NOTIFICATIONS_ADD_MSG_BUTTON = 'add_msg_btn'
 NOTIFICATIONS_DELETE_BUTTON = 'del_notification_btn'
+COPY_ATTRIBUTES_BUTTON = 'copy_attributes_btn'
+PASTE_ATTRIBUTES_BUTTON = 'paste_attributes_btn'
 NOTIFICATION_MESSAGE = 'message'
 
 # Name для login диалога
@@ -217,6 +223,7 @@ F_MSG_TO_USER = 'msg_to_user_id'
 F_MSG_TEXT = 'msg_text'
 F_MSG_IS_READ = 'msg_is_read'
 F_MSG_CREATION_DATE = 'msg_creation_date'
+F_MSG_TIMESTAMP = 'msg_timestamp'
 F_MSG_TIMESHEET = 'msg_timesheet_id'
 F_MSG_ALL = f'{F_MSG_FROM_USER}, {F_MSG_TO_USER}, {F_MSG_TEXT}, {F_MSG_IS_READ}, {F_MSG_CREATION_DATE}, {F_MSG_TIMESHEET}'
 F_MSG_ALL_ID = f'{F_MSG_ID}, {F_MSG_ALL}'
