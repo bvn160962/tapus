@@ -5,6 +5,7 @@ import logging
 import sys
 from uuid import uuid4
 
+import glob_module
 import settings
 
 CLIENT_OS_SUPPORTED = ('Windows', 'iPad', 'iPhone')
@@ -128,23 +129,70 @@ def get_week_by_date(date):
     return out
 
 
+# Количество недель в году
+def weeks_for_year(year):
+    last_week = datetime.date(year, 12, 28)
+    return last_week.isocalendar().week
+
+
+# Рабочий день?
+def is_work_day(date):
+    d = date.split('-')
+    year = int(d[0])
+    month = int(d[1])
+    day = int(d[2])
+    date_num = f'{datetime.date(year, month, day):%j}'  # Номер дня в году
+    data = glob_module.get_all_days_for_year(year)  # Строка по всем дням в году: 0-рабочий, 1-выходной
+
+    if data.find('1') == -1:  # Строка, состоящая из одних 0 - календарь еще не опубликован!
+        return not is_week_end(date)  # Отображаются только субботы и воскресенья
+    else:
+        return data[int(date_num)-1] == '0'
+
+
+# Суббота или воскресенье?
+def is_week_end(date):
+    d = date.split('-')
+    dt = datetime.datetime(int(d[0]), int(d[1]), int(d[2]))
+    return dt.weekday() in [5, 6]
+
+
 def date_to_day(date):
     s_date = str(date).split('-')
     return f'{s_date[2]}.{s_date[1]}'
 
 
-def list_dates_in_week(week=None):
-    s_date = datetime.datetime.strptime(week + '-1', "%Y-W%W-%w").date()
-    date_str = s_date.isocalendar()
+def list_dates_in_week(week):
+    # Функция datetime.datetime.strptime(week+'-1', "%Y-W%W-%w").date()
+    #   неправильно считает дату в ...2020, 2025... (если первая неделя года начинается с дней декабря)
+    #   выдает дату - начало следующей недели!!!
+    #   в таком году необходимо уменьшать на 1 номер недели !!!
+    #
+    # s_date = datetime.datetime.strptime(week+'-1', "%Y-W%W-%w").date()
+    # date_str = s_date.isocalendar()
+    # year_ = date_str[0]
+    # week_ = date_str[1]
+    # log_debug(f'week:{week}; s_date: {s_date}; date_str: {date_str}')
+    #
+    # Признак года, в котором 1-ая неделя начинается с декабря!
+    # if (
+    #         datetime.datetime.strptime(f'{year_}-1-1', "%Y-%W-%w") !=
+    #         datetime.datetime.strptime(f'{year_}-0-1', "%Y-%W-%w")):
+    #     if week_ > 1:
+    #         week_ = week_ - 1
+    # log_debug(f'week: {week_}')
+
+    # Другой способ определения года и недели:
+    w = week.split('-')
+    year_ = int(w[0])
+    week_ = int(w[1][1:])
+    # log_debug(f'week:{week}; year_: {year_}; week_: {week_}')
 
     out = []
-    for i in range(1, 8):
-        date = datetime.datetime.fromisocalendar(year=date_str[0], week=date_str[1], day=i).date()
-        # o_date = date_to_day(date)
-        # out.append(o_date)
+    for day in range(1, 8):
+        date = datetime.datetime.fromisocalendar(year=year_, week=week_, day=day).date()
         out.append(str(date))
 
-    # log_debug(f'out: {out}')
     return out
 
 
@@ -181,44 +229,30 @@ def is_project_in_week(week, prj_range):
     return s_edge and e_edge
 
 
-def shift_week(week='', next=True):
+# Возвращает следующую (next_week==True) или предыдущую неделю в формате '1985-W06'
+def shift_week(week, next_week):
     s = week.split('-')
-    if next:
-        i = int(s[1][1:]) + 1
+    # Год
+    year = int(s[0])
+
+    # Номер недели
+    c_week = int(s[1][1:])  # Текущая неделя
+    if next_week:
+        last_week = weeks_for_year(year)  # Последняя неделя текущего года
+        if c_week != last_week:
+            week_ = c_week + 1
+        else:  # Первая неделя следующего года
+            week_ = 1
+            year += 1
     else:
-        i = int(s[1][1:]) - 1
+        if c_week != 1:
+            week_ = int(s[1][1:]) - 1
+        else:  # Последняя неделя предыдущего года
+            year -= 1
+            week_ = weeks_for_year(year)
 
-    year = s[0]
-    last_week = datetime.date(int(year), 12, 28).isocalendar().week
+    return f'{year}-W{week_:0{2}}'  # Формат '1985-W06'
 
-    if i == 0:
-        i = 1
-    if i > last_week:
-        i = last_week
-
-    shifted_week = f'{year}-W{i:0{2}}'
-    return shifted_week
-
-
-# def logger_init():
-#     # Создать лог папку если ее нет
-#     #
-#     if not os.path.isdir(LOG_DIR):
-#         os.makedirs(LOG_DIR)
-#
-#     global logger
-#     if logger is None:
-#         logger = logging.getLogger(__name__)
-#         logger.setLevel(level=LOG_FILE_LEVEL)
-#
-#         file_handler = logging.FileHandler(LOG_FILE_NAME, mode=LOG_FILE_MODE)
-#         formatter = logging.Formatter(LOG_FILE_FORMAT)
-#         file_handler.setFormatter(formatter)
-#         logger.addHandler(file_handler)
-#         print(f'logger: {logger}')
-
-
-# logger_init()
 
 # Создать лог папку если ее нет
 if not os.path.isdir(LOG_DIR):

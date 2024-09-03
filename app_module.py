@@ -173,44 +173,32 @@ def logoff(module):
 def debug(module):
 
     title = 'Содержимое переменных текущей сессии'
-    s_list = [
-        ('Имя переменной', 'Значение'),
 
-        ('*** CACHE ***', ''),
-        (settings.C_CLIENT_OS_TYPE, str(app.get_c_prop(settings.C_CLIENT_OS_TYPE))),
-        (settings.C_WEEK, str(app.get_c_prop(settings.C_WEEK))),
-        (settings.C_DATE, str(app.get_c_prop(settings.C_DATE))),
-        (settings.C_TIMESHEET_ID, str(app.get_c_prop(settings.C_TIMESHEET_ID))),
-        (settings.C_PROJECT_ID, str(app.get_c_prop(settings.C_PROJECT_ID))),
-        (settings.C_TSH_BTN_VALUE, str(app.get_c_prop(settings.C_TSH_BTN_VALUE))),
-        (settings.C_USER_ID, str(app.get_c_prop(settings.C_USER_ID))),
-        (settings.C_USER_NAME, str(app.get_c_prop(settings.C_USER_NAME))),
-        (settings.C_USER_ROLE, str(app.get_c_prop(settings.C_USER_ROLE))),
-        (settings.C_HOUR_VALUE, str(app.get_c_prop(settings.C_HOUR_VALUE))),
-        (settings.C_NOTE_VALUE, str(app.get_c_prop(settings.C_NOTE_VALUE))),
-        (settings.C_COMMENT_VALUE, str(app.get_c_prop(settings.C_COMMENT_VALUE))),
-        (settings.C_STATUS_VALUE, str(app.get_c_prop(settings.C_STATUS_VALUE))),
+    s_list = [('Имя переменной', 'Значение')]
 
-        ('*** SETTINGS ***', ''),
-        ('DBG_DO_LOGIN', str(settings.DBG_DO_LOGIN)),
-        ('S_PERMANENT', str(app.application.permanent)),
-        ('S_LIFETIME_IN_MINUTES', str(app.application.permanent_session_lifetime)),
-        ('SHOW_EMPTY_WEEK', str(settings.SHOW_EMPTY_WEEK)),
-        ('IS_WINDOWS', str(util.IS_WINDOWS)),
-        ('LOG_DIR', str(util.LOG_DIR)),
-        ('LOG_FILE_NAME', str(util.LOG_FILE_NAME)),
-        ('LOG_FILE_MODE', str(util.LOG_FILE_MODE)),
-        ('LOG_FILE_LEVEL', str(util.LOG_FILE_LEVEL)),
+    s_list.append(('*** CACHE ***', ''))
+    for k in settings.C_LIST_NAMES:
+        s_list.append((k, str(app.get_c_prop(k))))
 
-        ('*** POSTGRES ***', ''),
-        ('PG_HOST', str(pg_module.PG_HOST)),
-        ('PG_PORT', str(pg_module.PG_PORT)),
-        ('PG_USER', str(pg_module.PG_USER)),
-        ('PG_DATABASE', str(pg_module.PG_DATABASE)),
-    ]
+    s_list.append(('*** SETTINGS ***', ''))
+    s_list.append(('DBG_DO_LOGIN', str(settings.DBG_DO_LOGIN)))
+    s_list.append(('S_PERMANENT', str(app.application.permanent)))
+    s_list.append(('S_LIFETIME_IN_MINUTES', str(app.application.permanent_session_lifetime)))
+    s_list.append(('SHOW_EMPTY_PROJECTS', str(settings.SHOW_EMPTY_PROJECTS)))
+    s_list.append(('IS_WINDOWS', str(util.IS_WINDOWS)))
+    s_list.append(('LOG_DIR', str(util.LOG_DIR)))
+    s_list.append(('LOG_FILE_NAME', str(util.LOG_FILE_NAME)))
+    s_list.append(('LOG_FILE_MODE', str(util.LOG_FILE_MODE)))
+    s_list.append(('LOG_FILE_LEVEL', str(util.LOG_FILE_LEVEL)))
+
+    s_list.append(('*** POSTGRES SETTINGS ***', ''))
+    s_list.append(('PG_HOST', str(pg_module.PG_HOST)))
+    s_list.append(('PG_PORT', str(pg_module.PG_PORT)))
+    s_list.append(('PG_USER', str(pg_module.PG_USER)))
+    s_list.append(('PG_DATABASE', str(pg_module.PG_DATABASE)))
 
     if pg_module.DB_CONNECT is not None:
-        s_list.append(('*** DATABASE ***', ''))
+        s_list.append(('*** DATABASE INFO ***', ''))
         s_list.append(('DB_VERSION', str(pg_module.DB_CONNECT.server_version)))
         s_list.append(('DB_STATUS', str(pg_module.DB_CONNECT.status)))
         s_list.append(('DB_TR_STATUS', str(pg_module.DB_CONNECT.get_transaction_status())))
@@ -232,6 +220,7 @@ def update(module):
     try:
         app.clear_timesheet()
         app.set_c_prop(settings.C_WEEK, util.get_week())
+        app.set_c_prop(settings.C_SHOW_EMPTY_PROJECTS, '')
         # app.print_cache()
 
         pg_module.DB_CONNECT = None
@@ -395,9 +384,12 @@ def prev_week():
 def copy_attributes(values):
     # util.log_debug(f'Нажата кнопка Copy Attributes: {values}')
 
-    app.set_c_prop(settings.C_HOUR_VALUE, values[ui_module.INPUT_HOURS_NAME])
-    app.set_c_prop(settings.C_NOTE_VALUE, values[ui_module.INPUT_NOTE_NAME])
-    app.set_c_prop(settings.C_COMMENT_VALUE, values[ui_module.INPUT_COMMENT_NAME])
+    if values[ui_module.INPUT_HOURS_NAME] != '':
+        app.set_c_prop(settings.C_HOUR_VALUE, values[ui_module.INPUT_HOURS_NAME])
+    if values[ui_module.INPUT_NOTE_NAME] != '':
+        app.set_c_prop(settings.C_NOTE_VALUE, values[ui_module.INPUT_NOTE_NAME])
+    if values[ui_module.INPUT_COMMENT_NAME] != '':
+        app.set_c_prop(settings.C_COMMENT_VALUE, values[ui_module.INPUT_COMMENT_NAME])
     app.set_c_prop(settings.C_STATUS_VALUE, values[ui_module.SELECT_STATUS_NAME])
 
     # app.print_cache()
@@ -408,6 +400,16 @@ def copy_attributes(values):
 def paste_attributes(values):
     # util.log_debug(f'Нажата кнопка Paste Attributes')
     return ui_module.create_timesheet_html(values=values)
+
+
+def show_empty_projects():
+    app.set_c_prop(settings.C_SHOW_EMPTY_PROJECTS, 'True')
+    return ui_module.create_timesheet_html()
+
+
+def hide_empty_projects():
+    app.set_c_prop(settings.C_SHOW_EMPTY_PROJECTS, 'False')
+    return ui_module.create_timesheet_html()
 
 
 def timesheets_save(values):
@@ -434,7 +436,6 @@ def timesheets_save(values):
             if value == ui_module.INPUT_COMMENT_NAME:
                 comment = values[value]
 
-        util.log_tmp(f'prj_id: {prj_id}; man_id: {man_id}; status: {inp_status}')
 
         if tsh_id == '':
             # Новая запись - Insert
@@ -593,7 +594,18 @@ def timesheets_post(values):
             if value == settings.PASTE_ATTRIBUTES_BUTTON:
                 return paste_attributes(values)
 
-        return 'Кнопка не обработана!', 404
+            # Нажата кнопка SHOW EMPTY PROJECTS
+            #
+            if value == settings.SHOW_EMPTY_PROJECTS_BUTTON:
+                return show_empty_projects()
+
+            # Нажата кнопка HIDE EMPTY PROJECTS
+            #
+            if value == settings.HIDE_EMPTY_PROJECTS_BUTTON:
+                return hide_empty_projects()
+
+        raise Exception(f'Нажата неизвестная кнопка!!!')
+        # return 'Кнопка не обработана!', 404
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_TIMESHEETS)
@@ -670,7 +682,7 @@ def projects_save(prj_id, props):
         # Проверка переданных атрибутов
         if p_name == '':
             msg = 'Атрибут "Название проекта" должен быть заполнен!'
-            return app.response(msg, settings.M_PROJECTS, props=prj_props, info=True)
+            return app.response(msg, settings.M_PROJECTS, props=prj_props, show=True)
             # return app.response(msg, settings.M_PROJECTS)
 
         if prj_id == '':  # Создать нового пользователя
@@ -699,7 +711,7 @@ def projects_ref_button(prj_id):
 
         e_list = data_module.where_project_refs(prj_id)
         if len(e_list) == 0:
-            return ui_module.create_info_html(settings.INFO_TYPE_INFORMATION, f'Нет записей учета отработанного времени на проекте "{prj_name}".', settings.M_PROJECTS)
+            return app.response(f'Нет записей учета отработанного времени на проекте "{prj_name}".', settings.M_PROJECTS, settings.MSG_TYPE_INFO)
         else:
             title = f'Записи учета отработанного времени на проекте "{prj_name}"'
             e_list.insert(0, ('Дата', 'Статус', 'Комментарий', 'Исполнитель'))  # Заголовок таблицы
@@ -770,6 +782,8 @@ def projects_post(values):
             if value == settings.DELETE_BUTTON_YES:
                 return projects_delete(values[value])
 
+            raise Exception(f'Нажата неизвестная кнопка!!!')
+
     except Exception as ex:
         return app.response(f'{ex}', settings.M_PROJECTS)
 
@@ -820,7 +834,7 @@ def users_save(usr_id, usr_props):
 
         if usr_id == '':  # Создать нового пользователя
             # util.log_debug('Insert')
-            usr_props = (usr_id, u_name, u_role, util.get_hash(u_pwd), u_mail, u_info)
+            usr_props = [usr_id, u_name, u_role, util.get_hash(u_pwd), u_mail, u_info]
             # Проверка атрибутов
             if u_name == '' or u_pwd == '':
                 msg = 'Атрибут(ы):'
@@ -830,6 +844,7 @@ def users_save(usr_id, usr_props):
                     msg += '\n\t- "Пароль";'
                 msg += '\nдолжны быть заполнены!'
                 return app.response(msg, settings.M_USERS, props=usr_props, show=True)
+            # usr_props.append(None)  # Заглушка для 'usr_image'
             data_module.insert_user(usr_props)
         else:  # Обновить существующего пользователя
             # util.log_debug('Update')
@@ -871,7 +886,7 @@ def users_ref_button(usr_id):
         obj_list = data_module.where_user_refs(usr_id)
 
         if len(obj_list) == 0:
-            return app.response(f'На пользователя "{usr_name}" ссылок нет.', settings.M_USERS)
+            return app.response(f'На пользователя "{usr_name}" ссылок нет.', settings.M_USERS, settings.MSG_TYPE_INFO)
         else:
             title = f'Ссылки на пользователя "{usr_name}"'
             obj_list.insert(0, ('Проект', 'Куда ссылается', 'Участие',))  # Заголовок таблицы
@@ -940,6 +955,8 @@ def users_post(values):
             #
             if value == settings.DELETE_BUTTON_YES:
                 return users_delete(values[value])
+
+            raise Exception(f'Нажата неизвестная кнопка!!!')
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_USERS)
@@ -1016,6 +1033,8 @@ def approvement_post(values):
             if value == settings.ALL_FLAG_BUTTON:
                 # util.log_info(f'значение кнопки реверс: {type(values[value])}')
                 return ui_module.create_approvement_html(values[value])
+
+            raise Exception(f'Нажата неизвестная кнопка!!!')
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_APPROVEMENT)

@@ -1,17 +1,23 @@
 #
 # Для отладки - вход без регистрации
-DBG_DO_LOGIN = True
+DBG_DO_LOGIN = False
 DBG_USER_ID = 102
 DBG_USER_NAME = 'user'
 DBG_USER_ROLE = 'Administrator'
 
-SHOW_EMPTY_WEEK = True
+SHOW_EMPTY_PROJECTS = True
+
+# Тип сообщения
+MSG_TYPE_ERR = 'Error'
+MSG_TYPE_INFO = 'Info'
+
 
 # Для отправки сообщения без timesheet (фиктивный tsh_id)
 # Необходим из-за ограничения целостности в таблице ts_messages
 INTERNAL_USER_ID = '100'
 INTERNAL_PROJECT_ID = '100'
 INTERNAL_TIMESHEET_ID = '100'
+INTERNAL_NAME = 'internal'  # Имя для проекта и пользователя, используемых для служебных целей
 
 # Длительность ожидания ответа при проверке существования сессии Socket в секундах
 SOCKET_TEST_TIMEOUT = 0.5
@@ -19,7 +25,13 @@ SOCKET_TEST_TIMEOUT = 0.5
 # Использовать систему оповещения
 USE_NOTIFICATIONS = True
 NOTIFICATIONS_DIALOG_ID = 'notifications_dialog_id'
+NOTIFICATIONS_DIALOG_HEADER_ID = 'notifications_dialog_header_id'
 NOTIFICATIONS_DIALOG_CLOSE_BTN_ID = 'notifications_dialog_close_btn_id'
+NOTIFICATIONS_BOTTOM_LINE_ID = 'notifications_bottom_line_id'
+NOTIFICATIONS_RIGHT_LINE_ID = 'notifications_right_line_id'
+NOTIFICATIONS_CORNER_LINE_ID = 'notifications_corner_line_id'
+NOTIFICATIONS_BOUNDARY_BOX = (NOTIFICATIONS_BOTTOM_LINE_ID, NOTIFICATIONS_RIGHT_LINE_ID, NOTIFICATIONS_CORNER_LINE_ID)
+
 
 # REST API
 # Получение списка отработанного времени
@@ -46,15 +58,27 @@ API_AUTHORIZATION_TOKEN = 'Y8OxltVburAc95YN92ln/2r9XUVmiQusLigbFvOJQ!pTRVEr6RjCw
 # Показывать диалог подтверждения удаления в виде модального окна
 USE_MODAL_CONFIRMATION_DIALOG = True
 CONFIRMATION_DIALOG_ID = 'confirm_dialog_id'
+CONFIRMATION_HEADER_ID = 'confirm_header_id'
+CONFIRMATION_MESSAGE_ID = 'confirm_message_id'
+CONFIRMATION_BOTTOM_LINE_ID = 'confirm_bottom_line_id'
+CONFIRMATION_RIGHT_LINE_ID = 'confirm_right_line_id'
+CONFIRMATION_CORNER_LINE_ID = 'confirm_corner_line_id'
+CONFIRMATION_BOUNDARY_BOX = (CONFIRMATION_BOTTOM_LINE_ID, CONFIRMATION_RIGHT_LINE_ID, CONFIRMATION_CORNER_LINE_ID)
 
 # Показывать сообщение в виде модального окна
 USE_MESSAGE_DIALOG = True
 MESSAGE_DIALOG_ID = 'message_dialog_id'
-MESSAGE_DIALOG_LABEL_ID = 'message_dialog_label_id'
-OK_BUTTON_ID = 'message_dialog_ok_btn_id'
+MESSAGE_DIALOG_TITLE_ID = 'message_dialog_title_id'
+MESSAGE_DIALOG_HEADER_ID = 'message_dialog_header_id'
+MESSAGE_DIALOG_CLOSE_BUTTON_ID = 'message_dialog_ok_btn_id'
+MESSAGE_BOTTOM_LINE_ID = 'message_bottom_line_id'
+MESSAGE_RIGHT_LINE_ID = 'message_right_line_id'
+MESSAGE_CORNER_LINE_ID = 'message_corner_line_id'
+MESSAGE_BOUNDARY_BOX = (MESSAGE_BOTTOM_LINE_ID, MESSAGE_RIGHT_LINE_ID, MESSAGE_CORNER_LINE_ID)
 
 # Имя ключа куки для передачи сообщения
 COOKIE_SHOW_MESSAGE = 'showMessage'
+
 
 # SESSION
 S_PERMANENT = False
@@ -94,10 +118,12 @@ MODULES = {
 
 # Стили для тэгов
 #
-ENTER_DISABLE = 'onkeydown="if(event.keyCode==13){return false;}"'  # Предотвращение нажатия Enter на Input
-TAG_INPUT = 'input ' + ENTER_DISABLE
+ENTER_DISABLE = 'onkeydown="return skip_enter(event);"'  # Предотвращение нажатия Enter на Input (через функцию в main.js)
+# ENTER_DISABLE = 'onkeydown="if(event.keyCode==13){return false;}"'  # Предотвращение нажатия Enter на Input (напрямую)
+TAG_INPUT = f'input {ENTER_DISABLE}'
 
 TAG_BUTTON_TABLE = 'button class="btn-t"'  # Кнопка в таблице timesheets
+TAG_BUTTON_TABLE_WEEKEND = 'button class="btn-t btn-t-weekend"'  # Кнопка в таблице timesheets выходной день
 TAG_BUTTON_TABLE_EDIT = 'button class="btn-t btn-t-edit"'  # Кнопка в таблице timesheets статус Edit
 TAG_BUTTON_TABLE_IN_APPROVE = 'button class="btn-t btn-t-in_approve"'  # Кнопка в таблице timesheets статус In-Approve
 TAG_BUTTON_TABLE_APPROVED = 'button class="btn-t btn-t-approved"'  # Кнопка в таблице timesheets статус Approved
@@ -132,6 +158,15 @@ C_HOUR_VALUE = 'c_hour_value'
 C_NOTE_VALUE = 'c_note_value'
 C_COMMENT_VALUE = 'c_comment_value'
 C_STATUS_VALUE = 'c_status_value'
+C_SHOW_EMPTY_PROJECTS = 'c_show_empty_projects'
+
+C_LIST_NAMES = (
+    C_CLIENT_OS_TYPE,
+    C_USER_ID, C_USER_NAME, C_USER_ROLE,
+    C_PROJECT_ID, C_TIMESHEET_ID, C_TSH_BTN_VALUE,
+    C_DATE, C_WEEK, C_SHOW_EMPTY_PROJECTS,
+    C_HOUR_VALUE, C_STATUS_VALUE, C_NOTE_VALUE, C_COMMENT_VALUE,
+)
 
 # Name для кнопок
 #
@@ -163,7 +198,9 @@ NOTIFICATIONS_ADD_MSG_BUTTON = 'add_msg_btn'
 NOTIFICATIONS_DELETE_BUTTON = 'del_notification_btn'
 COPY_ATTRIBUTES_BUTTON = 'copy_attributes_btn'
 PASTE_ATTRIBUTES_BUTTON = 'paste_attributes_btn'
-NOTIFICATION_MESSAGE = 'message'
+SHOW_EMPTY_PROJECTS_BUTTON = 'show_empty_projects_button'
+HIDE_EMPTY_PROJECTS_BUTTON = 'hide_empty_projects_button'
+NOTIFICATION_MESSAGE = 'notification_message'
 
 # Name для login диалога
 #
@@ -206,6 +243,7 @@ F_USR_ROLE = 'usr_role'
 F_USR_PASSWORD = 'usr_password'
 F_USR_MAIL = 'usr_mail'
 F_USR_INFO = 'usr_info'
+F_USR_IMAGE = 'usr_image'
 F_USR_ALL = f'{F_USR_NAME}, {F_USR_ROLE}, {F_USR_PASSWORD}, {F_USR_MAIL}, {F_USR_INFO}'
 F_USR_ALL_ID = f'{F_USR_ID}, {F_USR_ALL}'
 
@@ -300,3 +338,6 @@ ALL_FLAG_BUTTON = 'all_flag_btn'
 
 MAX_STR_LENGTH_FOR_NOTIFICATION = 30
 WIDTH_NOTIFICATION_BUTTON = 270
+
+# Загрузка изображения для пользователя
+IMG_TAG_ID = 'img_tag_id'

@@ -30,6 +30,12 @@ button {
     border-radius: 5px;
 }
 
+.btn-t-weekend {
+    font-weight: bold;
+    color: #D6EADA;
+    background-color: #D6EADA;
+}
+
 .btn-t-edit {
     background-color: #AFEEEE;
 }

@@ -1,4 +1,5 @@
 import traceback
+# from PIL import Image
 
 import psycopg2
 from psycopg2.extras import NamedTupleCursor
@@ -497,6 +498,12 @@ class Users:
                         Set {settings.F_USR_NAME} = %s, {settings.F_USR_ROLE} = %s, {settings.F_USR_PASSWORD} = %s, {settings.F_USR_MAIL} = %s, {settings.F_USR_INFO} = %s  \
                         Where {settings.F_USR_ID} = %s'
 
+    SQL_ADD_IMAGE = f'Update ts_users \
+                        Set {settings.F_USR_IMAGE} = %s \
+                        Where {settings.F_USR_ID} = %s'
+
+    SQL_GET_IMAGE = f'Select {settings.F_USR_IMAGE} From ts_users Where {settings.F_USR_ID} = %s'
+
     SQL_DELETE_USER = f'Delete From ts_users Where {settings.F_USR_ID} = %s'
 
     SQL_USER_REF_TEAM = f'Select {settings.F_PRJ_ALL_ID}, {settings.F_USR_NAME} ' \
@@ -514,6 +521,7 @@ class Users:
                              f'From ts_entries, ts_projects ' \
                              f'Where {settings.F_TSH_USER_ID} = %s ' \
                              f'And {settings.F_TSH_PRJ_ID} = {settings.F_PRJ_ID}'
+
 
     @classmethod
     def get_all_users(cls):
@@ -559,7 +567,6 @@ class Users:
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
                 curs.execute(cls.SQL_USER_BY_ID, (usr_id,))
                 return curs.fetchall()
-
         except Exception as ex:
             util.log_error(f'Error on getting user by id={usr_id}: ({ex})')
             raise ex
@@ -575,7 +582,30 @@ class Users:
                 util.log_error(f'Error on Insert user: {usr_props[1]}: ({ex})')
                 curs.execute('rollback')
                 raise ex
+            curs.execute('commit')
 
+    @classmethod
+    def get_user_image(cls, usr_id):
+        try:
+            conn = get_connect()
+            with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                curs.execute(cls.SQL_GET_IMAGE, (usr_id,))
+                return curs.fetchall()
+        except Exception as ex:
+            util.log_error(f'Error on getting user image by id={usr_id}: ({ex})')
+            raise ex
+
+    @classmethod
+    def add_user_image(cls, usr_id, usr_image):
+        util.log_debug(f'add_user_image: usr_id={usr_id}')
+        conn = get_connect()
+        with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+            try:
+                curs.execute(cls.SQL_ADD_IMAGE, (usr_image, usr_id))
+            except Exception as ex:
+                util.log_error(f'Error on Add user image for usr_id: {usr_id}: ({ex})')
+                curs.execute('rollback')
+                raise ex
             curs.execute('commit')
 
     @classmethod
@@ -594,7 +624,6 @@ class Users:
                 util.log_error(f'Error on Update usr_id: {usr_props[0]}: ({ex})')
                 curs.execute('rollback')
                 raise ex
-
             curs.execute('commit')
 
     @classmethod
@@ -882,7 +911,46 @@ def a(x='', **params):
 if __name__ == '__main__':
     util.log_debug(f'{__name__}')
     try:
-        a('1', a='2', b=3)
+
+        usr = Users
+        #  При помощи библиотеки PIL
+        #
+        # Open File from disk
+        # im = Image.open('C:/MY/DOCUMENTs/CML-Bench/CML-Bench-default_auth_image.png')
+        # im.show()
+
+        # Save image to DB
+        # usr.add_user_image(138, im.tobytes())
+
+        # Get image from DB
+        # user = usr.get_user_by_id(138)
+
+        # Save to File on disk
+        # img = Image.frombytes(mode='RGB', size=(416, 162), data=getattr(user[0], settings.F_USR_IMAGE))
+        # img.save('tmp/images/xxx.png')
+
+        # Прямой ввод/вывод
+        #
+        # Open File from disk
+        # im_f = open('C:/MY/DOCUMENTs/CML-Bench/CML-Bench-default_auth_image.png', 'rb')
+        # im_f = open('C:/MY/DOCUMENTs/Разработка/Python/PyCharm/TimeSheets/2024-03-24 15_29_08-Window.png', 'rb')
+        im_f = open('C:/IMGs/less.png', 'rb')
+        buff = im_f.read()
+        util.log_tmp(f'buff={type(buff)}; {buff}')
+
+        # Save image to DB
+        # usr.add_user_image(138, buff)
+
+        # Get image from DB
+        # user = usr.get_user_image(141)
+
+        # Save to File on disk
+        # out = open('static/img/xxx.png', 'w+b')
+        # out.write(getattr(user[0], settings.F_USR_IMAGE))
+        # out.close()
+
+
+        # a('1', a='2', b=3)
         # a(
         # util.log_tmp(f'{normalize_url('http://193.168.46.78,193.168.46.78/api/test_session/user')}')
 

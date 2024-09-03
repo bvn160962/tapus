@@ -50,11 +50,6 @@ def get_entries_by_user_name(user_name):
     return data
 
 
-def get_data(user_id=None, week=None):
-    time_sheets_data = get_all_entries(user_id=user_id, week=week)
-    return time_sheets_data
-
-
 def get_entry(tsh_id=None):
     # util.log_debug(f'{prj_id}, {tsh_id}')
 
@@ -108,16 +103,17 @@ def get_timesheet_dict(tsh_id):
             }
 
 
-def get_all_entries(user_id=None, week=None):
+def get_all_entries(user_id, week):
     try:
         range_dates = util.get_dates_by_week(week)
 
-        # Выполняем поиск тймшитов в БД
+        # Выполняем поиск записей в БД
         #
         entries = pg_module.Entries()
         if entries is None:
             raise Exception('entries is None')
 
+        # Все записи выбранного пользователя на заданный период
         entries_data = entries.get_entries(s_date=range_dates[0], e_date=range_dates[1], user_id=user_id)
 
         if entries_data is None:
@@ -132,7 +128,7 @@ def get_all_entries(user_id=None, week=None):
 
         # Возвращаем словарь
         #
-        return get_all_timesheet_dict(week=week, entries=entries_data)
+        return get_all_timesheet_dict(week, entries_data)
 
     except Exception as ex:
         traceback.print_exc()
@@ -222,8 +218,8 @@ def get_entries_for_approval_name(user_name):
 
 # Формирует словарь из курсора entries (для таблицы)
 #
-def get_all_timesheet_dict(week=None, entries=None):
-    dates = util.list_dates_in_week(week=week)
+def get_all_timesheet_dict(week, entries):
+    dates = util.list_dates_in_week(week)
 
     # Сформировать словарь дат
     #
@@ -254,13 +250,14 @@ def get_all_timesheet_dict(week=None, entries=None):
         comment = getattr(e, settings.F_TSH_COMMENT)
         if comment is None: comment = '-'
 
-        tsh_dict = {tsh_id:
-                        {
-                            settings.F_TSH_HOURS: hours,
-                            settings.F_TSH_NOTE: note,
-                            settings.F_TSH_STATUS: status,
-                            settings.F_TSH_COMMENT: comment
-                        }
+        tsh_dict = {
+            tsh_id:
+            {
+                settings.F_TSH_HOURS: hours,
+                settings.F_TSH_NOTE: note,
+                settings.F_TSH_STATUS: status,
+                settings.F_TSH_COMMENT: comment
+            }
         }
 
         p_dict = time_sheets_dict[prj_id]
@@ -273,7 +270,7 @@ def get_all_timesheet_dict(week=None, entries=None):
 
 # USERS
 #
-def get_all_users_dict(managers=False):
+def get_all_users_dict(managers=False, without_me=False):
     users = pg_module.Users()
     if managers:
         all_users = users.get_managers()
@@ -294,9 +291,20 @@ def get_all_users_dict(managers=False):
         if info is None:
             info = ''
 
+        user_name = getattr(user, settings.F_USR_NAME)
+        user_id = getattr(user, settings.F_USR_ID)
+
+        # Пропустить внутреннего пользователя
+        if user_name == settings.INTERNAL_NAME:
+            continue
+
+        # Пропустить текущего пользователя
+        if without_me and user_id == app.get_c_prop(settings.C_USER_ID):
+            continue
+
         u_dict = {
             settings.F_USR_ID: usr_id,
-            settings.F_USR_NAME: getattr(user, settings.F_USR_NAME),
+            settings.F_USR_NAME: user_name,
             settings.F_USR_PASSWORD: getattr(user, settings.F_USR_PASSWORD),
             settings.F_USR_ROLE: getattr(user, settings.F_USR_ROLE),
             settings.F_USR_MAIL: mail,
@@ -412,6 +420,11 @@ def where_user_refs(usr_id):
             ])
 
     return obj_list
+
+
+def update_user_image(user_id, image):
+    users = pg_module.Users()
+    users.add_user_image(user_id, image)
 
 
 # PROJECTS

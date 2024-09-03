@@ -1,7 +1,9 @@
+import requests
+import util_module
+
 #
 # Счетчик активных сессий через socket: connect/disconnect
 # Работает правильно!!!
-import util_module
 
 sess_cnt = 1
 
@@ -64,4 +66,24 @@ def get_sid_by_user(user_name):
     except Exception as ex:
         util_module.log_error(f'get_sid_by_user: {ex}')
         return ''
+
+
+#
+# Массивы по годам для определения праздничных дней
+workdays_by_years = {}
+
+
+# Получить список рабочих/выходных дней за год
+# строка из 366 0 и 1, где 0 - рабочий день, 1 - праздничный или выходной
+def get_all_days_for_year(year):
+    year_array = workdays_by_years.get(year)
+    if year_array is None:  # Сформировать массив за год
+        # util_module.log_tmp(f'year_array.get: {year}')
+        # requests.get(f'https://isdayoff.ru/api/getdata?year={year}&month={month}&day={day}').json()
+        year_array = requests.get(f'https://isdayoff.ru/api/getdata?year={year}').text
+        workdays_by_years[year] = year_array
+        if year_array.find('1') == -1:  # Строка, состоящая из одних 0 - календарь еще не опубликован!
+            util_module.log_info(f'Для выбранного года {year} рабочий календарь еще не опубликован.')
+
+    return year_array
 

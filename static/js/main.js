@@ -1,137 +1,106 @@
-console.log('start...');
-/*
-*  Работа с куками
-*/
-//document.cookie = "login=tom32";
-//document.cookie = "password=tom32";
-//console.log(document.cookie);
+﻿console.log('Document properties:');
+//console.log(document.title);
+//console.log(document.lastModified);
+//console.log(document.domain);
+//console.log(document.URL);
+console.log(document.charset);
 
 /*
 *  Попытка поймать событие при закрытии окна
 */
-
 //window.onclick = function (event) {
 //window.onbeforeunload = function (event) {
 window.onunload = function (event) {
     console.log('On close start: ' + window.closed);
     document.cookie = 'closed = ' + window.closed
 
-/*
-*  Выполнить HTTP Request (GET)
-*/
+
+  // Выполнить HTTP Request (GET) - уменьшить счетчик текущих сессий на стороне сервера
     if (true) {
         var req = new XMLHttpRequest();
         req.open("GET", "/close", true);
         req.send();
     }
-
-/*
-*  Управление кэшем сессии
-*/
-//    console.log('Key_1 before: '+sessionStorage.getItem('key_1'));
-//    sessionStorage.setItem('key_1', 'value_1');
-//    console.log('Key_1 after: '+sessionStorage.getItem('key_1'));
-
-//    window.close()
-
-/*
-*  Информационный диалог
-*/
-//    alert('WClosed')
-
-/*
-*  Диалог подтверждения
-*/
-//    const result = confirm("Завершить выполнение программы?");
-//    if(result===true)
-//        console.log("Работа программы завершена");
-//    else
-//        console.log("Программа продолжает работать");
 }
 
-
-
 /*
-*  Диалог подтверждения удаления
+*  Диалог подтверждения удаления - перемещение, изменение размера
+*  Вариант без регистрации события на кнопке в html
+*  На текущий момент вызывается при удалении записи отработанного времени (timesheet)
 */
 const delete_dialog = document.getElementById("confirm_dialog_id");
 const okButton = document.getElementById("delete_btn_yes_id");
 const cancelButton = document.getElementById("delete_btn_no_id");
 
-// Listener для кнопки с идентификатором delete_btn_id
-/***
-const deleteButton = document.getElementById("delete_btn_id");
-if (deleteButton != null) {
-    console.log("Add listener for: " + deleteButton.id)
-    deleteButton.addEventListener("click", () => {
-      console.log(deleteButton);
-      dialog.showModal();
-    });
-} else console.log("**Delete Confirm Dialog: Delete button not found!");
-***/
-
 // Listeners для всех кнопок с именем delete_btn
-if (delete_dialog != null) { // Режим модального диалога включен
+if (delete_dialog != null && document.title == 'TimeSheets') { // Режим модального диалога включен, только для TimeSheets
     let listDelButtons = document.getElementsByName("delete_btn");
-    if (listDelButtons != null) {
-        for( let i = 0; i < listDelButtons.length; i++) {
-            console.log("Add listener for: " + listDelButtons[i].name + "; value=" + listDelButtons[i].value)
+    if (listDelButtons.length > 0) {
+        for( let i = 0; i < listDelButtons.length; i++) { // Для всех кнопок с именем "delete_btn"
+            console.log("Confirmation Dialog: Добавлен обработчик для кнопки: " + listDelButtons[i].name + "; value=" + listDelButtons[i].value)
             listDelButtons[i].addEventListener("click", () => {
                 okButton.value = listDelButtons[i].value
                 delete_dialog.showModal();
             });
         }
     }
-
-    // Listener на кнопку Ok
-    /*
-    okButton.addEventListener("click", () => {
-      console.log("Ok button pressed for: " + okButton.value);
-    });
-    */
+//    else console.log("Confirmation Dialog: На форме нет доступных кнопок удаления (с именем delete_btn)")
 
     // Listener на кнопку Cancel
     cancelButton.addEventListener("click", () => {
       delete_dialog.close()
     });
+
+    // Перемещение диалога за заголовок - функция в common.js
+    reg_move_dialog(delete_dialog, document.getElementById("confirm_header_id"));
+
+    // Изменение размера окна диалога - функция в common.js
+    reg_resize_dialog(delete_dialog,
+                      document.getElementById("confirm_right_line_id"),
+                      document.getElementById("confirm_bottom_line_id"),
+                      document.getElementById("confirm_corner_line_id"));
 }
-
-
 
 
 /*
-*  Показать сообщение, если в cookie есть ключ "showMessage"
+*  Показать диалог Message, если в cookie есть ключ "showMessage"
 */
 const message_dialog = document.getElementById("message_dialog_id");
-const message_dialog_text = document.getElementById("message_dialog_label_id");
+const message_dialog_title = document.getElementById("message_dialog_title_id");
 const closeButton = document.getElementById("message_dialog_ok_btn_id");
 
-function getCookie(name) {
-  let cookie = document.cookie.split('; ').find(row => row.startsWith(name + '='));
-  return cookie ? cookie.split('=')[1] : null;
-}
 
-console.log('showMessage: ' + getCookie('showMessage'));
+message_type = getCookie('showMessage')
+console.log('showMessage.type: ' + message_type);
 
-message_text = getCookie('showMessage')
 if (message_dialog != null) {
+    // Перемещение диалога за заголовок - функция в common.js
+    reg_move_dialog(message_dialog, document.getElementById("message_dialog_header_id"));
+
+    // Изменение размера окна диалога - функция в common.js
+    reg_resize_dialog(message_dialog,
+                      document.getElementById("message_right_line_id"),
+                      document.getElementById("message_bottom_line_id"),
+                      document.getElementById("message_corner_line_id"));
     // Listener на кнопку Ok
     closeButton.addEventListener("click", () => {
       message_dialog.close()
     });
 
     // Показать сообщение
-    if (message_text != null) {
-//        alert(message_text)
+    if (message_type != null) { // Заголовок диалога
+        if (message_type == 'Error')
+            message_dialog_title.innerHTML = 'Ошибка'
+        else
+            message_dialog_title.innerHTML = 'Сообщение'
+
         message_dialog.showModal();
+        document.activeElement.blur(); // Убирает фокус на кнопке Close
+
         console.log('delete cookie key showMessage');
         document.cookie = 'showMessage=; Max-Age=-1;'; // delete cookie key
     }
 }
-
-
-
-
 
 
 /*
@@ -156,6 +125,16 @@ if (notifications_dialog != null) { // Режим модального диал�
     notifications_close_button.addEventListener("click", () => {
       notifications_dialog.close()
     });
+
+    // Перемещение диалога за заголовок - функция в common.js
+    reg_move_dialog(notifications_dialog,
+                    document.getElementById("notifications_dialog_header_id"));
+
+    // Изменение размера окна диалога - функция в common.js
+    reg_resize_dialog(notifications_dialog,
+                      document.getElementById("notifications_right_line_id"),
+                      document.getElementById("notifications_bottom_line_id"),
+                      document.getElementById("notifications_corner_line_id"));
 }
 
 
@@ -188,4 +167,32 @@ socket.on('test', function() { /* Регистрация обработчика 
     console.log('get test message...');
     socket.emit('test_ok', {'status': 'ok'});
 });
+
+
+/*
+*  Обработка кнопки "Отправить сообщение"
+*/
+let listNotificationButtons = document.getElementsByName("add_msg_btn"); // Кнопка "Отправить сообщение"
+let listNotificationMessages = document.getElementsByName("notification_message"); // Поле ввода текста сообщения
+
+if (listNotificationMessages.length > 0 && listNotificationButtons.length  > 0) {
+    listNotificationMessages[0].addEventListener("keyup", (e) => {
+
+      if (e.target.value == "") {
+//        const attribute = document.createAttribute("disabled");
+//        listNotificationButtons[0].setAttributeNode(attribute);
+//        listNotificationButtons[0].setAttribute("visibility", "hidden");
+//        listNotificationButtons[0].disabled = true;
+
+        listNotificationButtons[0].style.visibility = "hidden"; // Скрыть кнопку
+      }
+      else {
+//        listNotificationButtons[0].removeAttribute("disabled");
+//        listNotificationButtons[0].setAttribute("visibility", "visible");
+//        listNotificationButtons[0].disabled = false;
+
+        listNotificationButtons[0].style.visibility = "visible"; // Показать кнопку
+      }
+    });
+}
 

@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import traceback
 import datetime
@@ -178,7 +178,7 @@ def clear_timesheet():
 
 def print_cache():
     util.log_info(f'session cache:')
-    for k in session.keys():
+    for k in settings.C_LIST_NAMES:
         util.log_info(f' .. {k}={session.get(k)}')
 
 
@@ -191,21 +191,8 @@ def create_module_html(module, msg, **params):
     # Прямой вызов функции не подходит по причине зацикливания
     # return settings.MODULES[module][settings.M_HTML](err_message=err_msg)
 
-    # if module == settings.M_APPROVEMENT:
-    #     return ui_module.create_approvement_html(err_message=err_msg)
-    #
-    # if module == settings.M_TIMESHEETS:
-    #     return ui_module.create_timesheet_html(err_message=err_msg)
-    #
-    # if module == settings.M_USERS:
-    #     return ui_module.create_users_html(err_message=err_msg)
-    #
-    # if module == settings.M_PROJECTS:
-    #     return ui_module.create_projects_html(err_message=err_msg)
 
-
-def response(msg='', module='', **params):
-
+def response(msg='', module='', msg_type=settings.MSG_TYPE_ERR, **params):
     if get_c_prop(settings.C_USER_ID) == '':  # До логина !!!
         return ui_module.create_info_html(settings.INFO_TYPE_ERROR, msg)
 
@@ -215,16 +202,14 @@ def response(msg='', module='', **params):
             return ui_module.create_info_html(settings.INFO_TYPE_ERROR, msg)
 
         resp = make_response(create_module_html(module, msg, **params))
+        # resp.headers.set('Content-Type', 'text/html; charset=windows-1251')
 
-        if msg != '':
-            resp.set_cookie(settings.COOKIE_SHOW_MESSAGE, 'Yes')
+        if msg != '':  # Показать модальное окно с сообщением
+            resp.set_cookie(settings.COOKIE_SHOW_MESSAGE, msg_type)
 
         return resp
     else:  # Сообщение в виде отдельного HTML
         return ui_module.create_info_html(settings.INFO_TYPE_ERROR, msg, module)
-
-
-
 
 
 # @application.before_request
@@ -235,6 +220,7 @@ def response(msg='', module='', **params):
 #     # g.user = None
 #     # if 'user' in session:
 #     #     g.user = session['user']
+
 
 #
 # CLOSE - для обработки запросов из JS при закрытии браузера (windows.onbeforeunload)
@@ -254,6 +240,50 @@ def close():
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
+
+
+#
+# upload_image - обработчик запросов из JS для сохранения файлов изображения (Users)
+#
+@application.route('/upload_image/<user_id>', methods=['POST'])
+def save_mage(user_id):
+    try:
+
+        # POST
+        #
+        if request.method == 'POST':
+            # util.log_tmp(f'type={type(request.data)}')
+            # b_str = request.data.replace(b"\xc2", b"")
+            # b_str = b_str.replace(b"\xc3", b"")
+            # b_str = b_str.replace(b"\x87", b"\xc7")
+            # b_str = b_str.replace(b"\x8e", b"\xce")
+            # b_str = b_str.replace(b"\x8f", b"\xcf")
+            # b_str = b_str.replace(b"\x85", b"\xc5")
+            # b_str = b_str.replace(b"\x98", b"\xd8")
+            # b_str = b_str.replace(b"\x93", b"\xd3")
+            # b_str = b_str.replace(b"\x9d", b"\xd3")
+            # b_str = b_str.replace(b"\xb8", b"\xf8")
+            # b_str = b_str.replace(b"\xbf", b"\xff")
+            # util.log_debug(f'upload_image: {user_id}; {b_str}')
+            # util.log_tmp(f'type={type(b_str)}')
+            # data_module.update_user_image(user_id, request.data)
+
+            # Save to File on disk
+            util.log_tmp(f'data={type(request.data)}; {request.data}')
+            util.log_tmp(f'headers={request.mimetype_params};')
+            util.log_tmp(f'mimetype={request.content_md5};')
+            out = open('static/img/xxx.png', 'w+b')
+            out.write(request.data)
+            out.close()
+
+
+            # raise Exception('Error on upload user image...')
+            return f'Image Saved...'
+
+    except Exception as ex:
+        traceback.print_exc()
+        util.log_error(f'{ex}')
+        return response(f'{ex}', settings.M_USERS)
 
 
 #
@@ -366,6 +396,7 @@ def timesheets():
         #
         if request.method == 'POST':
             util.log_info(f'timesheets.POST...')
+            # raise Exception('Привет! Привет! Привет! Привет! Привет! Привет! Привет! Привет! ')
             return apm.timesheets_post(values)
 
     except Exception as ex:
@@ -481,7 +512,7 @@ def users():
         # POST
         #
         if request.method == 'POST':
-            util.log_info(f'users.POST...')
+            util.log_debug(f'users.POST...')
             return apm.users_post(values)
 
     except Exception as ex:

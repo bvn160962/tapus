@@ -1,3 +1,4 @@
+import traceback
 from xml.etree import ElementTree as et
 
 import app
@@ -13,7 +14,8 @@ INPUT_COMMENT_NAME = 'inp_comment'
 SELECT_STATUS_NAME = 'selected_status'
 SELECT_PROJECT_NAME = 'selected_project'
 
-FORM_HEIGHT = '500px'
+FORM_HEIGHT = '500px'  # При высоте менее этого значения появляется вертикальная прокрутка
+FORM_WIDTH = '800px'   # При ширине менее этого значения появляется горизонтальная прокрутка (иначе строка с модулями превращается в 2 строки)
 
 # Коды возврата HTML
 #  https://ru.wikipedia.org/wiki/%D0%A1%D0%BF%D0%B8%D1%81%D0%BE%D0%BA_%D0%BA%D0%BE%D0%B4%D0%BE%D0%B2_%D1%81%D0%BE%D1%81%D1%82%D0%BE%D1%8F%D0%BD%D0%B8%D1%8F_HTTP
@@ -45,6 +47,7 @@ class BaseHTML:
             else:
                 return base
 
+        charset = 'windows-1251'
         # util.log_debug(f'BaseHTML: New(title={title})')
 
         # dt = et.ProcessingInstruction('!DOCTYPE', 'html')
@@ -60,21 +63,21 @@ class BaseHTML:
 
         et.SubElement(self.__head, 'link', {"rel": "stylesheet", "href": 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'})
         et.SubElement(self.__head, 'link', {"rel": "stylesheet", "href": 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined'})
-        # et.SubElement(self.__head, 'meta', attrib={"name": "viewport", "content": "min-width=870px, initial-scale=1"})
+        et.SubElement(self.__head, 'meta', {"charset": charset})
 
         t_title = et.SubElement(self.__head, 'title')
         t_title.text = title
 
         # BODY
-        self.__body = et.SubElement(self.__html, 'body', {'style': f'min-height: {FORM_HEIGHT}; margin-top: 0;'})  # После этой высоты появляется прокрутка
+        self.__body = et.SubElement(self.__html, 'body', {'style': f'min-height: {FORM_HEIGHT}; margin-top: 0; min-width: {FORM_WIDTH}'})
 
         # MODAL CONFIRMATION DIALOG
         if use_modal_confirmation_dialog():
-            self.__confirm_message_lab = add_confirm_dialog(self.__body)
+            self.__confirm_message_lab = add_confirmation_dialog(self.__body)
 
         # MODAL INFO MESSAGE DIALOG
         if use_message_dialog():
-            self.__message_lab = add_message_dialog(self.__body, message=err_message)
+            self.__message_lab = add_message_dialog(self.__body, err_message)
 
         # MODAL NOTIFICATIONS DIALOG
         if use_notifications_dialog() and module == settings.M_TIMESHEETS and notifications is not None:
@@ -93,7 +96,13 @@ class BaseHTML:
         })
         socket.text = '\n'
 
-        self.__script = et.SubElement(self.__body, 'script', {'src': 'static/js/main.js'})
+        self.__script = et.SubElement(self.__body, 'script', {'src': 'static/js/common.js', 'charset': charset})
+        self.__script.text = '\n'
+
+        self.__script = et.SubElement(self.__body, 'script', {'src': 'static/js/main.js', 'charset': charset})
+        self.__script.text = '\n'
+
+        self.__script = et.SubElement(self.__body, 'script', {'src': 'static/js/files.js', 'charset': charset})
         self.__script.text = '\n'
 
         # MODULE
@@ -111,27 +120,32 @@ class BaseHTML:
 
         # LOGOFF button
         btn = et.SubElement(header, f'{h_btn_tag} title="Завершить работу"', {'style': h_btn_style, 'name': settings.LOGOFF_BUTTON})
-        btn.text = 'move_item'   # 'logout'
+        btn.text = 'logout'   # logout move_item
         # log_off = et.SubElement(p, 'button title="Завершить работу"', attrib={'type': 'submit', 'name': settings.LOGOFF_BUTTON, 'class': 'right btn-icon'})
         # i = et.SubElement(log_off, 'i', {'class': 'fa fa-user-circle-o fa-lg'})  # fa-user-o
         # i.text = '\n'  # !!!Обязательно!!! Иначе, создает одиночный тэг <i .... />, вместо парного <i> ... </i>
 
         # DEBUG button
         btn = et.SubElement(header, f'{h_btn_tag} title="Состояние текущей сессии"', {'style': h_btn_style, 'name': settings.DEBUG_BUTTON})
-        btn.text = 'pest_control'
+        btn.text = 'info'  # 'pest_control'
 
         # REFRESH button
         btn = et.SubElement(header, f'{h_btn_tag} title="Обновить"',{'style': h_btn_style, 'name': settings.UPDATE_BUTTON})
         btn.text = 'sync'
 
         # NOTIFICATION button
-        if use_notifications_dialog():
+        user_id = app.get_c_prop(settings.C_USER_ID)
+        if use_notifications_dialog() and user_id != '':  # Еще не было логина
             # Получить количество не прочтенных сообщений
-            msgs = data_module.get_unread_count(app.get_c_prop(settings.C_USER_ID))
+            msgs = data_module.get_unread_count(user_id)
             count = getattr(msgs[0], "count")
 
             # util.log_tmp(f'msg count: {count}')
-            container = et.SubElement(header, 'div class="h-btn-container"')
+            container = et.SubElement(
+                header,
+                f'div class="h-btn-container" onclick="msg_count_click(\'{settings.NOTIFICATION_BUTTON}\');"',
+                {'style': 'cursor: pointer;'},
+            )
             if count > 0:
                 text = et.SubElement(container, f'a class="h-btn-text" title="Непрочитанных сообщений: {count}"')
                 text.text = str(count)
@@ -173,7 +187,7 @@ class BaseHTML:
         # util.log_debug(f'===={self.__html}')
         # util.log_debug(f'====get_html:{et.tostring(self.__html)}')
 
-        return et.tostring(self.__html).decode()
+        return et.tostring(self.__html).decode(encoding='utf-8')
 
     def get_body(self):
         return self.__body
@@ -196,6 +210,20 @@ class BaseHTML:
         if self.__notifications_table is not None:
             pass
             # self.__notifications_lab.text = msg
+
+
+# Показывать пустые проекты в таблице
+def show_empty_projects():
+    cache_prop = app.get_c_prop(settings.C_SHOW_EMPTY_PROJECTS)
+
+    if cache_prop == '':  # Установить свойство в кэш
+        app.set_c_prop(settings.C_SHOW_EMPTY_PROJECTS, str(settings.SHOW_EMPTY_PROJECTS))
+        cache_prop = app.get_c_prop(settings.C_SHOW_EMPTY_PROJECTS)
+
+    if cache_prop == 'True':
+        return True
+    else:
+        return False
 
 
 # Использовать модальное окно для диалога подтверждения?
@@ -259,36 +287,64 @@ def get_row_color(row):
     return '#E5E5E5' if row % 2 == 0 else '#FFFFFF'
 
 
-def add_table_buttons(col, btn_id):
+def add_table_buttons(col, obj_id, module):
+
+    # Reference button
     btn = et.SubElement(col,
                         'button class="material-symbols-outlined btn-t-cell" title="Ссылки"',
                         {
                             'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0; padding-left: 1px',  # padding-left - добавлен для корректного отображения на ipad
                             'name': settings.REF_BUTTON,
-                            'value': btn_id,
+                            'value': obj_id,
                         })
     btn.text = 'quick_reference_all'
 
+    # Delete button
     if use_modal_confirmation_dialog():
         btn_type = 'button'
     else:
         btn_type = 'submit'
+
+    # Текст сообщения для
+    if module == settings.M_PROJECTS:
+        msg_text = f'Проект:\n\t- Название: {data_module.get_project_by_id_list(obj_id)[2]}'
+    elif module == settings.M_USERS:
+        msg_text = f'Пользователя:\n\t- Имя: {data_module.get_user_by_id_list(obj_id)[1]}'
+    else:
+        msg_text = ''
+
+    params = [
+        settings.CONFIRMATION_DIALOG_ID,
+        settings.DELETE_BUTTON_NO_ID,
+        settings.DELETE_BUTTON_YES_ID,
+        settings.CONFIRMATION_MESSAGE_ID,
+        settings.CONFIRMATION_HEADER_ID,
+        settings.CONFIRMATION_BOTTOM_LINE_ID,
+        settings.CONFIRMATION_RIGHT_LINE_ID,
+        settings.CONFIRMATION_CORNER_LINE_ID,
+        msg_text,
+        obj_id,
+        ]
+
     btn = et.SubElement(col,
-                        'button class="material-symbols-outlined btn-t-cell" title="Удалить"',
+                        'button class="material-symbols-outlined btn-t-cell" title="Удалить" '
+                        f'onclick="show_confirm_dialog({params});"',
                         {
-                            'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0; padding-left: 1px',
+                            'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0; padding: 0 0 0 2',
                             'name': settings.DELETE_BUTTON,
-                            'value': btn_id,
+                            'id': obj_id,
+                            'value': obj_id,
                             'type': btn_type,
                         })
     btn.text = 'delete'
 
+    # Edit button
     btn = et.SubElement(col,
                         'button class="material-symbols-outlined btn-t-cell" title="Редактировать"',
                         {
-                            'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0; padding-left: 1px',
+                            'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0; padding: 0 0 0 2',
                             'name': settings.TABLE_BUTTON,
-                            'value': btn_id,
+                            'value': obj_id,
                         })
     btn.text = 'draft_orders'
 
@@ -334,9 +390,11 @@ def create_login_html(err_msg, module='', user_name=''):
     # FORM
     form = et.SubElement(body, 'form', attrib={'name': 'login', 'method': 'POST', 'class': 'center_frame'})
     et.SubElement(form, 'img', {'src': '/static/img/timesheets.png', 'class': 'fit-picture'})
+    script = et.SubElement(body, 'script', {'src': '/static/js/common.js'})
+    script.text = '\n'
 
     et.SubElement(form, settings.TAG_INPUT, {'style': 'margin: 5px;', 'type': 'text', 'value': user_name, 'name': settings.LOGIN_USERNAME, 'placeholder': 'логин'})
-    et.SubElement(form, settings.TAG_INPUT, {'style': 'margin: 3px;', 'type': 'password', 'name': settings.LOGIN_PASSWORD, 'placeholder': 'пароль'})
+    et.SubElement(form, 'input', {'style': 'margin: 3px;', 'type': 'password', 'name': settings.LOGIN_PASSWORD, 'placeholder': 'пароль'})
 
     p = et.SubElement(form, 'p')
     msg = et.SubElement(p, 'a', {'style': 'color: red;'})
@@ -428,69 +486,125 @@ def create_info_html(i_type='', msg=(), module='', title='', url=''):
         return base_html.get_html()
 
     except Exception as ex:
+        traceback.print_exc()
         return f'Произошла ошибка при формировании html страницы (Create INFO):\n {ex}', 520  # Server Unknown Error
 
 
-def add_confirm_dialog(body, title='', message=''):
+# Диалог подтверждения
+def add_confirmation_dialog(body):
 
     # Dialog
-    dialog = et.SubElement(body, f'dialog id={settings.CONFIRMATION_DIALOG_ID} class="head_style dial-pos"')
-    form = et.SubElement(dialog, 'form method="POST"', {'style': 'margin-bottom: 0px'})
-    # form = et.SubElement(dialog, 'form method="dialog"')
+    dialog = et.SubElement(body, 'dialog',
+                           {
+                               'id': settings.CONFIRMATION_DIALOG_ID,
+                               'class': 'head_style dial-pos',
+                               'style': 'min-width: 300px; max-width: 500px; min-height: 170; max-height: 400; border-radius: 5px;'})
 
-    p = et.SubElement(form, 'p')
+    form = et.SubElement(dialog, 'form',
+                         {
+                             'method': 'POST',
+                             'style': 'margin-bottom: 0px;'})
+
+    # Header
+    header = et.SubElement(form, 'div', {
+        'id': settings.CONFIRMATION_HEADER_ID,
+        'style': 'padding: 0 0 0 5px; border-bottom: solid 1px black; background-color: gray; color: white; user-select: none;'})
+    header.text = "Подтверждение удаления"
+
     # Title
-    l_title = et.SubElement(p, 'label', {'style': 'white-space: pre-wrap; border-bottom: solid 1px gray; padding-bottom: 5px'})
-    if title == '':
-        l_title.text = 'Вы действительно хотите удалить выбранный объект?'
-    else:
-        l_title.text = title
+    p = et.SubElement(form, 'p align=center', {'style': 'user-select: none;'})
+    l_title = et.SubElement(p, 'label', {
+        'style': 'white-space: pre-wrap; border-bottom: solid 1px gray; padding-bottom: 5px'})
+    l_title.text = 'Вы действительно хотите удалить?'
 
     # Message
-    l_message = et.SubElement(p, 'label', {'style': 'white-space: pre-wrap; color: black; font-weight: normal;'})
-    if message != '':
-        l_message.text = message
-    else:
-        l_message.text = ''
+    p = et.SubElement(form, 'p', {
+        'style': 'user-select: none;'
+    })
+    l_message = et.SubElement(p, 'label', {
+        'id': settings.CONFIRMATION_MESSAGE_ID,
+        'style': 'white-space: pre-wrap; color: black; font-weight: normal; padding: 0 0 0 5px;'})
+    l_message.text = ''
 
     # Confirm Buttons
-    p = et.SubElement(form, 'p class=center', {'style': 'margin-top: 10px;'})
+    p = et.SubElement(form, 'p', {'class': 'center', 'style': 'margin: 10 0 5 0px; user-select: none;'})
     # Ok
-    btn = et.SubElement(p,
-                        f'button id={settings.DELETE_BUTTON_YES_ID} name={settings.DELETE_BUTTON_YES} type="submit"',
-                        {'style': 'margin-right: 5px; width: 50px'})
+    btn = et.SubElement(p, 'button', {
+        'type': 'submit',
+        'id': settings.DELETE_BUTTON_YES_ID,
+        'name': settings.DELETE_BUTTON_YES,
+        'style': 'margin-right: 5px; width: 50px'})
     btn.text = 'Да'
     # Cancel
-    btn = et.SubElement(p, f'button id={settings.DELETE_BUTTON_NO_ID} type="button"',
-                        {'style': 'width: 50px'})
+    btn = et.SubElement(p, 'button', {
+        'type': 'button',
+        'id': settings.DELETE_BUTTON_NO_ID,
+        'style': 'width: 50px'})
     btn.text = 'Нет'
+
+    # Resizing lines
+    add_border_for_resizing(form, settings.CONFIRMATION_BOUNDARY_BOX)
 
     return l_message
 
 
-def add_notifications_dialog(body, notifications):
-    # Dialog
-    dialog = et.SubElement(body, f'dialog id={settings.NOTIFICATIONS_DIALOG_ID} class="head_style dial-pos"', {'style': 'padding: 0; border-radius: 5px'})
-    form = et.SubElement(dialog, 'form method="POST"', {'style': 'margin-bottom: 0px'})
+# Рамка справа и внизу для изменения размера окна
+def add_border_for_resizing(form, box):
+    c_style = 'margin: 0px; border: 2px solid transparent; position: absolute;'
+    et.SubElement(form, 'hr', {
+        'id': box[0],
+        # 'color': 'red',
+        'style': f'{c_style} cursor: ns-resize; bottom: 0; width: 98%'})
 
-    header = et.SubElement(form, 'header class="sticky"', {'style': 'margin: 0; padding:0; border-bottom: solid 1px gray; background-color: #E5E5E5; color: black'})
-    p = et.SubElement(form, 'p', {'style': '; min-width: 550px; max-height: 300px; text-align: center;'})
+    et.SubElement(form, 'hr', {
+        'id': box[1],
+        # 'color': 'green',
+        'style': f'{c_style} cursor: ew-resize; right: 0; top: 0; height: 94%;'})
+
+    et.SubElement(form, 'hr', {
+        'id': box[2],
+        # 'color': 'blue',
+        'style': f'{c_style} cursor: nwse-resize; right: 0; bottom: 0; height: 2%;  width: 1%'})
+
+
+def add_notifications_dialog(body, notifications):
+    add_info_dialog(body, notifications,
+                    ('От кого', 'Кому', 'Дата', 'Текст сообщения'),
+                    f'История переписки по записи отработанного времени ({len(notifications)})',
+                    'Сообщений нет!')
+
+
+def add_info_dialog(body, obj_list, tbl_header, title, empty_msg):
+    # Dialog
+    dialog = et.SubElement(body, 'dialog',
+                           {
+                               'id': settings.NOTIFICATIONS_DIALOG_ID,
+                               'class': 'head_style dial-pos',
+                               'style': 'padding: 0; border-radius: 5px'})
+    form = et.SubElement(dialog, 'form',
+                         {
+                             'method': 'POST',
+                             'style': 'margin-bottom: 0px'})
+
+    header = et.SubElement(form, 'header',
+                           {
+                               'id': settings.NOTIFICATIONS_DIALOG_HEADER_ID,
+                               'class': 'sticky',
+                               'style': 'margin: 0; padding:0; border-bottom: solid 2px black; background-color: gray; color: white; user-select: none;'})
+    p = et.SubElement(form, 'p',
+                      {'style': '; min-width: 550px; max-height: 300px; text-align: center;'})
 
     # Close Button
     btn = et.SubElement(header, f'{h_btn_tag} id={settings.NOTIFICATIONS_DIALOG_CLOSE_BTN_ID} type=button title="Закрыть окно"',
                         {'style': f'{h_btn_style}; color: black;', 'name': settings.LOGOFF_BUTTON})
     btn.text = 'disabled_by_default'
 
-    # btn = et.SubElement(p, f'button id={settings.NOTIFICATIONS_DIALOG_CLOSE_BTN_ID} type="button"',
-    #                     {'style': 'width: 80px; float:right;'})
-    # btn.text = 'Закрыть'
-
     # Title
     l_title = et.SubElement(header, 'label', {'style': 'white-space: pre-wrap; padding: 5px;'})
-    l_title.text = f'История переписки по записи отработанного времени ({len(notifications)})'
+    l_title.text = title
 
     # Notifications
-    if len(notifications) > 0:
+    if len(obj_list) > 0:
         table = et.SubElement(p, 'table', {'style': 'border: 2px; padding: 10px'})
 
         min_max_width = 'min-width: 100px; max-width: 300px;'
@@ -500,15 +614,14 @@ def add_notifications_dialog(body, notifications):
         b_style = f'{min_max_width} {b_border}  padding-left: 10px; padding-top: 10px;'
 
         # Заголовок таблицы
-        header = ('От кого', 'Кому', 'Дата', 'Текст сообщения')
         row = et.SubElement(table, 'tr')
-        for h in header:
+        for h in tbl_header:
             col = et.SubElement(row, 'td align=left', {'style': h_style})
             a = et.SubElement(col, 'a')
             a.text = h
 
         # Заполнение таблицы
-        for r in notifications:
+        for r in obj_list:
             row = et.SubElement(table, 'tr')
             for c in r:
                 td = 'td align=left'
@@ -517,39 +630,58 @@ def add_notifications_dialog(body, notifications):
                 a.text = c
     else:
         lab = et.SubElement(p, 'label')
-        lab.text = 'Сообщений нет!'
+        lab.text = empty_msg
         table = None
+
+    # Resizing lines
+    add_border_for_resizing(form, settings.NOTIFICATIONS_BOUNDARY_BOX)
 
     return table
 
 
-def add_message_dialog(body, title='', message=''):
+def add_message_dialog(body, message, title=''):
 
     # Dialog
-    dialog = et.SubElement(body, f'dialog id={settings.MESSAGE_DIALOG_ID} class="head_style dial-pos"')
-    form = et.SubElement(dialog, 'form method="dialog"', {'style': 'margin-bottom: 0px'})
+    dialog = et.SubElement(body, 'dialog',
+                           {
+                               'id': settings.MESSAGE_DIALOG_ID,
+                               'class': 'head_style dial-pos',
+                               'style': 'padding: 0; border-radius: 5px'})
 
-    p = et.SubElement(form, 'p', {'style': 'max-width: 500px'})
+    form = et.SubElement(dialog, 'form',
+                         {
+                             'style': 'margin-bottom: 0px'})
+
+    header = et.SubElement(form, 'header',
+                           {
+                               'id': settings.MESSAGE_DIALOG_HEADER_ID,
+                               'class': 'sticky',
+                               'style': 'margin: 0; padding:0; border-bottom: solid 2px black; background-color: gray; color: white; user-select: none;'})
+
+    # Close Button
+    btn = et.SubElement(header, f'{h_btn_tag} id={settings.MESSAGE_DIALOG_CLOSE_BUTTON_ID} type=button title="Закрыть окно"',
+                        {'style': f'{h_btn_style}; color: black;', 'name': settings.LOGOFF_BUTTON})
+    btn.text = 'disabled_by_default'
     # Title
-    l_title = et.SubElement(p, f'label id={settings.MESSAGE_DIALOG_LABEL_ID}',
-                            {'style': 'white-space: pre-wrap; border-bottom: solid 1px gray; padding-bottom: 5px'})
+    l_title = et.SubElement(header, 'label',
+                            {
+                                'id': settings.MESSAGE_DIALOG_TITLE_ID,
+                                'style': 'white-space: pre-wrap; margin: 5 5 10 10;'})
     if title == '':
-        l_title.text = 'Сообщение:'
+        l_title.text = 'Сообщение'
     else:
         l_title.text = title
 
-    et.SubElement(p, 'br')
-
     # Message
-    l_message = et.SubElement(p, 'label', {'style': 'white-space: pre-wrap; color: black; font-weight: normal;'})
+    p = et.SubElement(form, 'p ',
+                      {'style': '; min-width: 200; max-width: 500; max-height: 300; text-align: left;'})
+
+    l_message = et.SubElement(p, 'div', {'style': 'white-space: pre-wrap; color: black; font-weight: normal; margin: 5 5 15 10;'})
     l_message.text = message
 
-    # Ok
-    p = et.SubElement(form, 'p class=center', {'style': 'margin-top: 10px;'})
-    btn = et.SubElement(p,
-                        f'button id={settings.OK_BUTTON_ID} type="button"',
-                        {'style': 'margin-right: 5px; width: 50px'})
-    btn.text = 'Ok'
+    # Resizing lines
+    add_border_for_resizing(form, settings.MESSAGE_BOUNDARY_BOX)
+
     return l_message
 
 
@@ -715,8 +847,19 @@ def add_timesheets_info(base_html, tsh_entry=None, notifications=()):
     btn.text = 'content_copy'
 
     # Кнопка Заполнить атрибуты
-    btn = et.SubElement(col, f'{c_btn_tag} title="Заполнить атрибуты текущей записи"',{'name': settings.PASTE_ATTRIBUTES_BUTTON, 'style': c_btn_style})
+    btn = et.SubElement(col, f'{c_btn_tag} title="Заполнить атрибуты текущей записи"', {'name': settings.PASTE_ATTRIBUTES_BUTTON, 'style': c_btn_style})
     btn.text = 'content_paste'
+
+    # Разделитель на панели кнопок
+    splitter = et.SubElement(col, 'label', {'style': 'margin-left: 25; margin-right: 15'})
+
+    # Кнопка Показать/Скрыть пустые проекты
+    if show_empty_projects():
+        btn = et.SubElement(col, f'{c_btn_tag} title="Скрыть пустые проекты"', {'name': settings.HIDE_EMPTY_PROJECTS_BUTTON, 'style': c_btn_style})
+        btn.text = 'date_range'
+    else:
+        btn = et.SubElement(col, f'{c_btn_tag} title="Отобразить пустые проекты"', {'name': settings.SHOW_EMPTY_PROJECTS_BUTTON, 'style': c_btn_style})
+        btn.text = 'calendar_month'
 
     # HEADERS ROW
     #
@@ -820,7 +963,9 @@ def add_timesheets_info(base_html, tsh_entry=None, notifications=()):
         btn_tag = f'button name={settings.DELETE_BUTTON} value={tsh_id}'
         if use_modal_confirmation_dialog():  # Для показа модального окна
             btn_tag = f'{btn_tag} type=button'
-            msg = (f'\n\t- Дата: {date}'
+            msg = (
+                   f'Запись:'
+                   f'\n\t- Дата: {date}'
                    f'\n\t- Часы: {hours}'
                    f'\n\t- Статус: {status}'
                    f'\n\t- Замечание: {note}'
@@ -848,7 +993,7 @@ def add_timesheets_info(base_html, tsh_entry=None, notifications=()):
 
     # TABLE AREA
     #
-    time_sheets_data = data_module.get_data(user_id=app.get_c_prop(settings.C_USER_ID), week=week)
+    time_sheets_data = data_module.get_all_entries(app.get_c_prop(settings.C_USER_ID), week)
     add_timesheet_table(time_sheets_data, col_table)
 
 
@@ -858,7 +1003,6 @@ def add_timesheet_table(data, column):
     date_col_width = '50px'
     c_btn_value = app.get_c_prop(settings.C_TSH_BTN_VALUE)
 
-    curr_tsh_id = app.get_c_prop(settings.C_TIMESHEET_ID)
     table_tsh = et.SubElement(column, 'table', {'style': 'width: 100%; border-spacing: 0px 0px;'})
 
     # HEAD ROW (project + dates)
@@ -867,7 +1011,103 @@ def add_timesheet_table(data, column):
     dates_col_node = et.SubElement(dates_node, settings.TAG_TD_BTN_HEADER, {'style': f'width: {prj_col_width};'})
     dates_col_node.text = 'Проекты'
 
-    days = util.list_dates_in_week(week=app.get_c_prop(settings.C_WEEK))
+    days = util.list_dates_in_week(app.get_c_prop(settings.C_WEEK))
+    for day in days:
+        dates_cell_node = et.SubElement(dates_node, settings.TAG_TD_BTN_HEADER, {'style': f'width: {date_col_width};'})
+        btn_day = et.SubElement(dates_cell_node, 'a', attrib={'type': 'submit', 'name': 'btn_' + day, 'value': day})
+        btn_day.text = util.date_to_day(day)
+
+    # TABLE ROWS (project + hours)
+    #
+    # if settings.SHOW_EMPTY_WEEK:
+    prj_dict = data_module.get_all_projects_dict(app.get_c_prop(settings.C_USER_ID))
+    row = 0
+    for prj_id in prj_dict:
+        if data is not None:
+            curr_prj_data = data.get(prj_id)  # Данные на проект, на выбранную неделю
+        else:
+            curr_prj_data = None  # Данных на выбранную неделю нет ни по одному проекту
+
+        if curr_prj_data is not None or (curr_prj_data is None and show_empty_projects()):  # Показывать пустые строчки проектов?
+            row += 1
+            prj_data = prj_dict[prj_id]
+            prj_name = prj_data[settings.F_PRJ_NAME]
+            row_node = et.SubElement(table_tsh, 'tr',
+                                     {'style': f'background-color: {get_row_color(row)}; padding: none;'})
+            project_ceil = et.SubElement(row_node, 'td', {'style': f'width: {prj_col_width};'})
+            project_ceil.text = prj_name
+
+            for day in days:
+                # Для кнопки без записи
+                btn_value = prj_id + settings.SPLITTER + settings.SPLITTER + day
+                hours = '0'
+
+                # Выходные
+                if not util.is_work_day(day):  # util.is_week_end(day):
+                    btn_tag = settings.TAG_BUTTON_TABLE_WEEKEND
+                else:
+                    btn_tag = settings.TAG_BUTTON_TABLE
+
+                # Найти запись на дату и проект
+                if curr_prj_data is not None:
+                    tsh_data = curr_prj_data[settings.FLD_TSH_DICT].get(day)
+                    tsh_id = list(tsh_data)[0]
+                    if tsh_id != settings.EMPTY_ID_KEY:  # Найдена запись на эту дату
+                        btn_value = prj_id + settings.SPLITTER + tsh_id + settings.SPLITTER + day
+                        hours = tsh_data[tsh_id][settings.F_TSH_HOURS]
+                        note = tsh_data[tsh_id][settings.F_TSH_NOTE]
+                        comment = tsh_data[tsh_id][settings.F_TSH_COMMENT]
+
+                        # Раскрасить по статусам
+                        status = tsh_data[tsh_id][settings.F_TSH_STATUS]
+                        title = f' title="Статус: {settings.get_status_name(status)}\nОписание: {note}\nКомментарий: {comment}"'
+                        if status == settings.EDIT_STATUS:
+                            btn_tag = settings.TAG_BUTTON_TABLE_EDIT + title
+
+                        if status == settings.IN_APPROVE_STATUS:
+                            btn_tag = settings.TAG_BUTTON_TABLE_IN_APPROVE + title
+
+                        if status == settings.APPROVED_STATUS:
+                            btn_tag = settings.TAG_BUTTON_TABLE_APPROVED + title
+
+                        if status == settings.REJECTED_STATUS:
+                            btn_tag = settings.TAG_BUTTON_TABLE_REJECTED + title
+                # util.log_debug(f'add_timesheet_table_area: day={day}; prj_id={prj_id}; tsh_id={tsh_id}; tsh_data={tsh_data}')
+
+                # Сформировать html для кнопки
+                day_node = et.SubElement(row_node, 'td', {'style': f'width: {date_col_width};'})
+                if btn_value == c_btn_value:  # Выбранная ячейка
+                    btn_node = et.SubElement(day_node, btn_tag,
+                                             {
+                                                 'type': 'submit',
+                                                 'name': settings.TABLE_BUTTON,
+                                                 'value': btn_value,
+                                                 'style': 'border: 3px solid blue;'})
+                else:
+                    btn_node = et.SubElement(day_node, btn_tag,
+                                             {
+                                                 'type': 'submit',
+                                                 'name': settings.TABLE_BUTTON,
+                                                 'value': btn_value})
+                btn_node.text = hours
+
+
+def add_timesheet_table_old(data, column):
+
+    prj_col_width = '330px'
+    date_col_width = '50px'
+    c_btn_value = app.get_c_prop(settings.C_TSH_BTN_VALUE)
+
+    # curr_tsh_id = app.get_c_prop(settings.C_TIMESHEET_ID)
+    table_tsh = et.SubElement(column, 'table', {'style': 'width: 100%; border-spacing: 0px 0px;'})
+
+    # HEAD ROW (project + dates)
+    #
+    dates_node = et.SubElement(table_tsh, 'tr')
+    dates_col_node = et.SubElement(dates_node, settings.TAG_TD_BTN_HEADER, {'style': f'width: {prj_col_width};'})
+    dates_col_node.text = 'Проекты'
+
+    days = util.list_dates_in_week(app.get_c_prop(settings.C_WEEK))
     for day in days:
         dates_cell_node = et.SubElement(dates_node, settings.TAG_TD_BTN_HEADER, {'style': f'width: {date_col_width};'})
         btn_day = et.SubElement(dates_cell_node, 'a', attrib={'type': 'submit', 'name': 'btn_' + day, 'value': day})
@@ -938,7 +1178,7 @@ def add_timesheet_table(data, column):
                     btn_node.text = hours
 
     else:  # Показать доступные проекты с пустыми кнопками
-        if settings.SHOW_EMPTY_WEEK:
+        if settings.SHOW_EMPTY_PROJECTS:
             prj_dict = data_module.get_all_projects_dict(app.get_c_prop(settings.C_USER_ID))
             row = 0
             for prj_id in prj_dict:
@@ -1023,6 +1263,7 @@ def create_timesheet_html(err_message='', values=None):
         return base_html.get_html()
 
     except Exception as ex:
+        traceback.print_exc()
         return f'Произошла ошибка при формировании html страницы (TimeSheets):\n {ex}', 520  # Server Unknown Error
 
 
@@ -1071,16 +1312,41 @@ def add_user_info(table, fields):
                     opt.text = settings.R_LIST[k]
 
             if row == 0:
-                # Ячейка с кнопками
+                # Ячейка с изображением пользователя
                 col_3 = et.SubElement(edt_row,
-                                         'td rowspan=5 class=td-buttons',
-                                         {'align': 'left', 'valign': 'top', 'width': '40'})
-                add_buttons(col_3, u_id)
+                                      'td rowspan=5 class=td-buttons',
+                                      {'align': 'left', 'valign': 'top'})
+                # Кнопки
+                div = et.SubElement(col_3, 'div', {'style': 'border: 0px solid red;'})
+                btn_select = et.SubElement(div, 'button', {
+                    'onclick': f'select_img({settings.IMG_TAG_ID})',
+                    'type': 'button',
+                    'class': 'material-symbols-outlined btn-t-cell',
+                    'title': 'Выбрать файл с изображением',
+                    'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0;'})
+                btn_select.text = 'person_search'
 
-                # Пустая, объединенная ячейка для выравнивания общей ширины
+                btn_upload = et.SubElement(div, 'button', {
+                    'onclick': f'upload_img({settings.IMG_TAG_ID})',
+                    'type': 'button',
+                    'class': 'material-symbols-outlined btn-t-cell',
+                    'title': 'Сохранить изображение',
+                    'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0;'})
+                btn_upload.text = 'save'
+                # Изображение
+                et.SubElement(col_3, 'img', {'id': settings.IMG_TAG_ID, 'src': '/static/img/xxx.png', 'style': 'width: 200; border: 0px solid blue;'})
+                # et.SubElement(div, 'input', {'name': 'zxc', 'id': 'zxc_id', 'type': 'file'})
+
+                # Ячейка с кнопками
                 col_4 = et.SubElement(edt_row,
-                                         'td rowspan=5 class=td-buttons',
-                                         {'align': 'left', 'valign': 'middle', 'width': '100%', 'style': 'border: 0px solid blue;'})
+                                      'td rowspan=5 class=td-buttons',
+                                      {'align': 'left', 'valign': 'top'})
+                add_buttons(col_4, u_id)
+
+                # Пустая, объединенная ячейка для выравнивания общей ширины (на всю ширину)
+                et.SubElement(edt_row,
+                              'td rowspan=5 class=td-buttons',
+                              {'align': 'left', 'valign': 'middle', 'width': '100%', 'style': 'border: 0px solid blue;'})
 
             row += 1
 
@@ -1089,7 +1355,7 @@ def add_user_table(table, fields):
     x = '0px'
     # Объединенная ячейка для таблицы пользователей
     row = et.SubElement(table, 'tr')
-    col = et.SubElement(row, 'td colspan=4 align=left', {'style': f'border: {x} solid black;'})  # Объединенная ячейка
+    col = et.SubElement(row, 'td colspan=5 align=left', {'style': f'border: {x} solid black;'})  # Объединенная ячейка
 
     # Таблица пользователей
     table_usr = et.SubElement(col, 'table', {'style': 'width: 100%; border-spacing: 0px 0px;'})
@@ -1134,7 +1400,7 @@ def add_user_table(table, fields):
             else:  # Кнопки в строке таблицы
                 col = et.SubElement(row, 'td align=left class=td-table-border',
                                     {'style': f'min-width: {f[2]}; border: {x} solid red;'})
-                add_table_buttons(col, users[user][f[3]])
+                add_table_buttons(col, users[user][f[3]], settings.M_USERS)
 
         n_row += 1
 
@@ -1148,7 +1414,7 @@ def create_users_html(user_props=(), show_info=False, err_message='', **params):
 
         show = params.get('show')
         if show is not None:
-            show_info = show_info
+            show_info = show
 
         # Дополнительная обработка атрибутов
         u_id = '' if len(user_props) == 0 or user_props[0] is None else str(user_props[0])
@@ -1187,6 +1453,7 @@ def create_users_html(user_props=(), show_info=False, err_message='', **params):
         return base_html.get_html()
 
     except Exception as ex:
+        traceback.print_exc()
         return f'Произошла ошибка при формировании html страницы (Users):\n {ex}', 520  # Server Unknown Error
 
 
@@ -1196,7 +1463,7 @@ def add_project_info(table, fields):
 
     p_id = fields[0][5]
     # get managers
-    users = data_module.get_all_users_dict(True)  # Поиск Managers
+    users = data_module.get_all_users_dict(managers=True)  # Поиск Managers
     # util.log_debug(f'add_project_info: managers={users}')
     if len(users) == 0:
         raise Exception(f'В базе данных нет пользователей с ролью {settings.R_MANAGER}.\nВозможно, база данных недоступна!')
@@ -1355,7 +1622,7 @@ def add_project_table(table, fields):
                     col.text = projects[p][f[3]]
             else:  # Кнопки в строке таблицы
                 col = et.SubElement(row, 'td class=td-table-border', {'style': f'min-width: {f[2]}; border: {x} solid blue'})
-                add_table_buttons(col, p)
+                add_table_buttons(col, p, settings.M_PROJECTS)
 
         n_row += 1
 
@@ -1369,7 +1636,7 @@ def create_projects_html(prj_props=(), show_info=False, err_message='', **params
 
         show = params.get('show')
         if show is not None:
-            show_info = show_info
+            show_info = show
 
         # Дополнительная обработка атрибутов
         p_id = '' if len(prj_props) == 0 or prj_props[0] is None else str(prj_props[0])
@@ -1407,6 +1674,7 @@ def create_projects_html(prj_props=(), show_info=False, err_message='', **params
         return base_html.get_html()
 
     except Exception as ex:
+        traceback.print_exc()
         return f'Произошла ошибка при формировании html страницы (Projects):\n {ex}', 520  # Server Unknown Error
 
 
@@ -1548,6 +1816,7 @@ def create_approvement_html(is_clear='1', err_message=''):
         return base_html.get_html()
 
     except Exception as ex:
+        traceback.print_exc()
         return f'Произошла ошибка при формировании html страницы (Approvement):\n {ex}', 520  # Server Unknown Error
 
 
@@ -1810,7 +2079,7 @@ def add_notifications_chats(module, obj_id=''):
         confirmation_btn.text = 'Чаты'
 
         # Список пользователей(кнопки)
-        users = data_module.get_all_users_dict()
+        users = data_module.get_all_users_dict(without_me=True)
         # util.log_debug(f'создаём список чатов: users={users}')
         table = et.SubElement(p, 'table', {'style': 'border-right: 0px solid gray'})
 
@@ -1893,9 +2162,10 @@ def add_notifications_chats(module, obj_id=''):
 
                     c2 = et.SubElement(r1, 'td', {'style': 'border: 0px solid blue'})
                     send_btn = et.SubElement(c2, 'button class="material-symbols-outlined btn-t-cell" title="Send"',
-                                             {'style': 'height: 20px;'
-                                                       'width: 20px;'
-                                                       'border-radius: 10px',
+                                             {'style': 'height: 20px; '
+                                                       'visibility: hidden; '
+                                                       'width: 20px; '
+                                                       'border-radius: 10px;',
                                               'type': 'submit',
                                               'name': settings.NOTIFICATIONS_ADD_MSG_BUTTON,
                                               'value': f'{obj_id}'})
