@@ -255,7 +255,6 @@ def close():
 def image_upload(user_id):
     try:
         if request.method == 'POST':
-            raise Exception('1234567908')
             # Сохранить файл в базе данных
             # util.log_tmp(f'request.data: {request.data}')
             data_module.update_user_image(user_id, request.data)
