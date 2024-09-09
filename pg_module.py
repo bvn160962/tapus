@@ -4,6 +4,7 @@ import traceback
 import psycopg2
 from psycopg2.extras import NamedTupleCursor
 
+import data_module
 import settings
 import ui_module
 import util_module as util
@@ -498,7 +499,7 @@ class Users:
                         Set {settings.F_USR_NAME} = %s, {settings.F_USR_ROLE} = %s, {settings.F_USR_PASSWORD} = %s, {settings.F_USR_MAIL} = %s, {settings.F_USR_INFO} = %s  \
                         Where {settings.F_USR_ID} = %s'
 
-    SQL_ADD_IMAGE = f'Update ts_users \
+    SQL_UPDATE_IMAGE = f'Update ts_users \
                         Set {settings.F_USR_IMAGE} = %s \
                         Where {settings.F_USR_ID} = %s'
 
@@ -589,6 +590,7 @@ class Users:
         try:
             conn = get_connect()
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                # raise Exception('Произошла внутренняя ошибка!')
                 curs.execute(cls.SQL_GET_IMAGE, (usr_id,))
                 return curs.fetchall()
         except Exception as ex:
@@ -601,7 +603,8 @@ class Users:
         conn = get_connect()
         with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
             try:
-                curs.execute(cls.SQL_ADD_IMAGE, (usr_image, usr_id))
+                # raise Exception('Произошла внутренняя ошибка!')
+                curs.execute(cls.SQL_UPDATE_IMAGE, (usr_image, usr_id))
             except Exception as ex:
                 util.log_error(f'Error on Add user image for usr_id: {usr_id}: ({ex})')
                 curs.execute('rollback')
@@ -912,7 +915,7 @@ if __name__ == '__main__':
     util.log_debug(f'{__name__}')
     try:
 
-        usr = Users
+        # usr = Users
         #  При помощи библиотеки PIL
         #
         # Open File from disk
@@ -934,21 +937,26 @@ if __name__ == '__main__':
         # Open File from disk
         # im_f = open('C:/MY/DOCUMENTs/CML-Bench/CML-Bench-default_auth_image.png', 'rb')
         # im_f = open('C:/MY/DOCUMENTs/Разработка/Python/PyCharm/TimeSheets/2024-03-24 15_29_08-Window.png', 'rb')
-        im_f = open('C:/IMGs/less.png', 'rb')
-        buff = im_f.read()
-        util.log_tmp(f'buff={type(buff)}; {buff}')
+        # im_f = open('C:/IMGs/less.png', 'rb')
+        # buff = im_f.read()
+        # util.log_tmp(f'buff={type(buff)}; {buff}')
 
         # Save image to DB
+        # data_module.update_user_image(user_id, request.data)
         # usr.add_user_image(138, buff)
 
         # Get image from DB
-        # user = usr.get_user_image(141)
+        # user = Users.get_user_image('141')
+        # user = data_module.get_user_image(999)
 
         # Save to File on disk
-        # out = open('static/img/xxx.png', 'w+b')
+        # out = open('C:\\IMGs\\xxx.png', 'w+b')
         # out.write(getattr(user[0], settings.F_USR_IMAGE))
         # out.close()
 
+        util.log_tmp("qweйцу")
+        util.log_tmp(f'{bytes("qweйцу".encode("1251"))}')
+        util.log_tmp(f'{bytes("qweйцу".encode("utf-8"))}')
 
         # a('1', a='2', b=3)
         # a(

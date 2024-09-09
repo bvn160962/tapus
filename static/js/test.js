@@ -67,3 +67,20 @@ load_file.addEventListener('change', async function() {
     console.log(img_tag.file);
 
 });
+
+
+/*
+* Выгрузить файл в download
+*/
+
+    //var file = new Blob([data], {type: file_type});
+//    var a = document.createElement('a'),
+//        url = URL.createObjectURL(img_tag.file);
+//    a.href = url;
+//    a.download = 'c:\\temp\\xxx.png';
+//    document.body.appendChild(a);
+//    a.click();
+//    setTimeout(function() {
+//      document.body.removeChild(a);
+//      window.URL.revokeObjectURL(url);
+//    }, 0);

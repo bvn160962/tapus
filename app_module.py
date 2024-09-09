@@ -782,7 +782,7 @@ def projects_post(values):
             if value == settings.DELETE_BUTTON_YES:
                 return projects_delete(values[value])
 
-            raise Exception(f'Нажата неизвестная кнопка!!!')
+            # raise Exception(f'Нажата неизвестная кнопка!!!')
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_PROJECTS)
@@ -956,7 +956,7 @@ def users_post(values):
             if value == settings.DELETE_BUTTON_YES:
                 return users_delete(values[value])
 
-            raise Exception(f'Нажата неизвестная кнопка!!!')
+            # raise Exception(f'Нажата неизвестная кнопка!!!')
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_USERS)
@@ -1034,7 +1034,7 @@ def approvement_post(values):
                 # util.log_info(f'значение кнопки реверс: {type(values[value])}')
                 return ui_module.create_approvement_html(values[value])
 
-            raise Exception(f'Нажата неизвестная кнопка!!!')
+            # raise Exception(f'Нажата неизвестная кнопка!!!')
 
     except Exception as ex:
         return app.response(f'{ex}', settings.M_APPROVEMENT)

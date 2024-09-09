@@ -192,6 +192,12 @@ def create_module_html(module, msg, **params):
     # return settings.MODULES[module][settings.M_HTML](err_message=err_msg)
 
 
+def new_response(status, data=''):
+    resp = make_response(data)
+    resp.status = status
+    return resp
+
+
 def response(msg='', module='', msg_type=settings.MSG_TYPE_ERR, **params):
     if get_c_prop(settings.C_USER_ID) == '':  # До логина !!!
         return ui_module.create_info_html(settings.INFO_TYPE_ERROR, msg)
@@ -245,45 +251,57 @@ def close():
 #
 # upload_image - обработчик запросов из JS для сохранения файлов изображения (Users)
 #
-@application.route('/upload_image/<user_id>', methods=['POST'])
-def save_mage(user_id):
+@application.route('/image_upload/<user_id>', methods=['POST'])
+def image_upload(user_id):
     try:
-
-        # POST
-        #
         if request.method == 'POST':
-            # util.log_tmp(f'type={type(request.data)}')
-            # b_str = request.data.replace(b"\xc2", b"")
-            # b_str = b_str.replace(b"\xc3", b"")
-            # b_str = b_str.replace(b"\x87", b"\xc7")
-            # b_str = b_str.replace(b"\x8e", b"\xce")
-            # b_str = b_str.replace(b"\x8f", b"\xcf")
-            # b_str = b_str.replace(b"\x85", b"\xc5")
-            # b_str = b_str.replace(b"\x98", b"\xd8")
-            # b_str = b_str.replace(b"\x93", b"\xd3")
-            # b_str = b_str.replace(b"\x9d", b"\xd3")
-            # b_str = b_str.replace(b"\xb8", b"\xf8")
-            # b_str = b_str.replace(b"\xbf", b"\xff")
-            # util.log_debug(f'upload_image: {user_id}; {b_str}')
-            # util.log_tmp(f'type={type(b_str)}')
-            # data_module.update_user_image(user_id, request.data)
-
-            # Save to File on disk
-            util.log_tmp(f'data={type(request.data)}; {request.data}')
-            util.log_tmp(f'headers={request.mimetype_params};')
-            util.log_tmp(f'mimetype={request.content_md5};')
-            out = open('static/img/xxx.png', 'w+b')
-            out.write(request.data)
-            out.close()
-
-
-            # raise Exception('Error on upload user image...')
-            return f'Image Saved...'
+            raise Exception('1234567908')
+            # Сохранить файл в базе данных
+            # util.log_tmp(f'request.data: {request.data}')
+            data_module.update_user_image(user_id, request.data)
+            return new_response(200)
 
     except Exception as ex:
         traceback.print_exc()
         util.log_error(f'{ex}')
-        return response(f'{ex}', settings.M_USERS)
+        return new_response(500, f'{ex}')
+
+
+#
+# load_image - обработчик запросов из JS для загрузки файлов изображения (Users)
+#
+@application.route('/image_download/<user_id>', methods=['GET'])
+def image_download(user_id):
+    try:
+        if request.method == 'GET':
+            img = data_module.get_user_image(user_id)
+            # util.log_tmp(f'load_image for {user_id}; {img}; {len(img)}')
+            if len(img) == 0 or getattr(img[0], settings.F_USR_IMAGE) is None:
+                return new_response(201, 'Нет изображения')
+            else:
+                data = bytes(getattr(img[0], settings.F_USR_IMAGE))
+                return new_response(200, data)
+
+    except Exception as ex:
+        traceback.print_exc()
+        util.log_error(f'{ex}')
+        return new_response(500, f'{ex}')
+
+
+#
+# delete_image - обработчик запросов из JS для удаления файлов изображения (Users)
+#
+@application.route('/image_delete/<user_id>', methods=['GET'])
+def image_delete(user_id):
+    try:
+        if request.method == 'GET':
+            data_module.update_user_image(user_id, None)
+            return new_response(200, 'Ok')
+
+    except Exception as ex:
+        traceback.print_exc()
+        util.log_error(f'{ex}')
+        return new_response(500, f'{ex}')
 
 
 #

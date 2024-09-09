@@ -583,7 +583,6 @@ def add_info_dialog(body, obj_list, tbl_header, title, empty_msg):
                                'style': 'padding: 0; border-radius: 5px'})
     form = et.SubElement(dialog, 'form',
                          {
-                             'method': 'POST',
                              'style': 'margin-bottom: 0px'})
 
     header = et.SubElement(form, 'header',
@@ -676,8 +675,11 @@ def add_message_dialog(body, message, title=''):
     p = et.SubElement(form, 'p ',
                       {'style': '; min-width: 200; max-width: 500; max-height: 300; text-align: left;'})
 
-    l_message = et.SubElement(p, 'div', {'style': 'white-space: pre-wrap; color: black; font-weight: normal; margin: 5 5 15 10;'})
-    l_message.text = message
+    l_message = et.SubElement(p, 'div', {
+        'id': settings.MESSAGE_DIALOG_TEXT_ID,
+        'style': 'white-space: pre-wrap; color: black; font-weight: normal; margin: 5 5 15 10;'})
+    # Если присвоить пробел - граничные теги добавятся в div а не в form (т.к. div "не закроется"!)
+    l_message.text = message if message != '' else '\n'
 
     # Resizing lines
     add_border_for_resizing(form, settings.MESSAGE_BOUNDARY_BOX)
@@ -1270,83 +1272,123 @@ def create_timesheet_html(err_message='', values=None):
 # USERS
 #
 def add_user_info(table, fields):
+    def get_img_id(usr_id):
+        return f'{settings.IMG_TAG_ID}_{u_id}'
 
     u_id = fields[0][5]
     u_role = fields[2][5]
 
     row = 0
     for f in fields:
-        if f[0] != 'ID':  # Пропустить атрибут ID
-            # util.log_debug(f'row={row}')
-            edt_row = et.SubElement(table, 'tr')
+        if f[0] != 'ID':  # Пропустить атрибут user_id
+            first_row = et.SubElement(table, 'tr')  # 1-ая строка в общей таблице
+            if row == 0:
+                # Ячейка с таблицей для имен и значений текстовых свойств (1-ая ячейка 1-ой строки)
+                col_props = et.SubElement(first_row, 'td', {
+                    'style': 'min-width: 250px;',
+                    'valign': 'top',
+                })
+                table_props = et.SubElement(col_props, 'table')
+
+            props_row = et.SubElement(table_props, 'tr')  # Текущая строка в таблице текстовых свойств
+            col_1 = et.SubElement(props_row, 'td', {
+                'style': 'min-width: 250px;',
+                'align': 'right'
+            })
 
             # Название атрибута
-            col_1 = et.SubElement(edt_row, 'td', {'style': 'min-width: 250px;', 'align': 'right'})
             if f[4] == 'ir' or f[4] == 'p':  # Обязательные атрибуты
                 fld = et.SubElement(col_1, settings.TAG_A_HEAD_REQ)
             else:
                 fld = et.SubElement(col_1, settings.TAG_A_HEAD)
             fld.text = f[0]
 
-            # if row > 3:  # 2 ячейки в одну для длинных полей)
-            #     col_2 = et.SubElement(edt_row, 'td colspan=3', {'style': 'padding-left: 5px'})
-            # else:  # одна ячейка
-            #     col_2 = et.SubElement(edt_row, 'td', {'style': 'width: 300px; padding-left: 5px'})  # Определяет общую ширину таблицы!
-            col_2 = et.SubElement(edt_row, 'td', {'style': 'width: 300; padding-left: 5px; border: 0px solid blue;'})
-
+            # Значение атрибута
+            col_2 = et.SubElement(props_row, 'td', {
+                'style': 'width: 300; padding-left: 5px; border: 0px solid blue;'
+            })
             if f[4] == 'i' or f[4] == 'ir':  # Input
                 et.SubElement(col_2, f'{settings.TAG_INPUT} size={f[1]} class=input-bottom-border',
                                   {'type': 'text', 'name': f[3], 'value': f[5]})
 
             if f[4] == 'p':  # Password
-                et.SubElement(col_2, f'{settings.TAG_INPUT} size={f[1]} class=input-bottom-border',
-                                  {'type': 'password', 'name': f[3], 'value': ''})
+                et.SubElement(col_2, f'{settings.TAG_INPUT} size={f[1]} class=input-bottom-border', {
+                    'type': 'password',
+                    'name': f[3],
+                    'value': ''
+                })
 
             if f[4] == 'r':  # Roles List
-                p_list = et.SubElement(col_2, 'select class=input-bottom-border', attrib={'name': settings.F_USR_ROLE})
+                p_list = et.SubElement(col_2, 'select class=input-bottom-border', {'name': settings.F_USR_ROLE})
                 for k in settings.R_LIST:
                     if u_role == k:
-                        opt = et.SubElement(p_list, 'option selected', attrib={'value': k})
+                        opt = et.SubElement(p_list, 'option selected', {'value': k})
                     else:
-                        opt = et.SubElement(p_list, 'option', attrib={'value': k})
+                        opt = et.SubElement(p_list, 'option', {'value': k})
                     opt.text = settings.R_LIST[k]
 
             if row == 0:
-                # Ячейка с изображением пользователя
-                col_3 = et.SubElement(edt_row,
-                                      'td rowspan=5 class=td-buttons',
-                                      {'align': 'left', 'valign': 'top'})
-                # Кнопки
-                div = et.SubElement(col_3, 'div', {'style': 'border: 0px solid red;'})
-                btn_select = et.SubElement(div, 'button', {
-                    'onclick': f'select_img({settings.IMG_TAG_ID})',
-                    'type': 'button',
-                    'class': 'material-symbols-outlined btn-t-cell',
-                    'title': 'Выбрать файл с изображением',
-                    'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0;'})
-                btn_select.text = 'person_search'
+                # Ячейка с изображением пользователя (2-ая ячейка 1-ой строки)
+                if u_id != '':
+                    col = et.SubElement(first_row, 'td class="td-buttons"', {
+                        'align': 'left',
+                        'valign': 'top'
+                    })
+                    # Кнопки
+                    img_tag_id = get_img_id(u_id)
+                    div = et.SubElement(col, 'div', {
+                        'style': 'background-color: #C0C0C0; border: 0px solid red;'
+                    })
+                    # Выбрать изображение
+                    btn_select = et.SubElement(div, 'button', {
+                        'onclick': f'select_img({img_tag_id});',
+                        'type': 'button',
+                        'class': 'material-symbols-outlined btn-t-cell',
+                        'title': 'Выбрать файл с изображением',
+                        'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0;'
+                    })
+                    btn_select.text = 'person_search'
+                    # Сохранить изображение
+                    btn_upload = et.SubElement(div, 'button', {
+                        'onclick': f'upload_img({img_tag_id});',
+                        'type': 'button',
+                        'class': 'material-symbols-outlined btn-t-cell',
+                        'title': 'Сохранить изображение',
+                        'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0;'
+                    })
+                    btn_upload.text = 'save'
+                    # Удалить изображение
+                    btn_upload = et.SubElement(div, 'button', {
+                        'onclick': f'delete_img({img_tag_id});',
+                        'type': 'button',
+                        'class': 'material-symbols-outlined btn-t-cell',
+                        'title': 'Удалить изображение',
+                        'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0;'
+                    })
+                    btn_upload.text = 'delete'
+                    # Область изображения
+                    et.SubElement(col, 'img', {
+                        # 'onload': f'upload_img({img_tag_id});',  # Почему-то не находит JS функцию ?!!
+                        'id': img_tag_id,
+                        'name': settings.IMG_TAG_NAME,
+                        'src': '/static/img/no_image.png',
+                        'style': 'width: 200; max-height: 140'
+                    })
+                    # et.SubElement(div, 'input', {'name': 'zxc', 'id': 'zxc_id', 'type': 'file'})
 
-                btn_upload = et.SubElement(div, 'button', {
-                    'onclick': f'upload_img({settings.IMG_TAG_ID})',
-                    'type': 'button',
-                    'class': 'material-symbols-outlined btn-t-cell',
-                    'title': 'Сохранить изображение',
-                    'style': 'padding-inline: 0px; margin-left: 0; margin-right: 0;'})
-                btn_upload.text = 'save'
-                # Изображение
-                et.SubElement(col_3, 'img', {'id': settings.IMG_TAG_ID, 'src': '/static/img/xxx.png', 'style': 'width: 200; border: 0px solid blue;'})
-                # et.SubElement(div, 'input', {'name': 'zxc', 'id': 'zxc_id', 'type': 'file'})
+                # Ячейка с общими кнопками (3-я ячейка 1-ой строки)
+                col = et.SubElement(first_row, 'td class="td-buttons"', {
+                    'align': 'left', 'valign': 'top'
+                })
+                add_buttons(col, u_id)
 
-                # Ячейка с кнопками
-                col_4 = et.SubElement(edt_row,
-                                      'td rowspan=5 class=td-buttons',
-                                      {'align': 'left', 'valign': 'top'})
-                add_buttons(col_4, u_id)
-
-                # Пустая, объединенная ячейка для выравнивания общей ширины (на всю ширину)
-                et.SubElement(edt_row,
-                              'td rowspan=5 class=td-buttons',
-                              {'align': 'left', 'valign': 'middle', 'width': '100%', 'style': 'border: 0px solid blue;'})
+                # Пустая, объединенная ячейка для выравнивания общей ширины (4-ая ячейка 1-ой строки)
+                et.SubElement(first_row, 'td class="td-buttons"', {
+                    'align': 'left',
+                    'valign': 'middle',
+                    'width': '100%',
+                    'style': 'border: 0px solid blue;'
+                })
 
             row += 1
 

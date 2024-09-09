@@ -72,36 +72,7 @@ const closeButton = document.getElementById("message_dialog_ok_btn_id");
 
 message_type = getCookie('showMessage')
 console.log('showMessage.type: ' + message_type);
-
-if (message_dialog != null) {
-    // Перемещение диалога за заголовок - функция в common.js
-    reg_move_dialog(message_dialog, document.getElementById("message_dialog_header_id"));
-
-    // Изменение размера окна диалога - функция в common.js
-    reg_resize_dialog(message_dialog,
-                      document.getElementById("message_right_line_id"),
-                      document.getElementById("message_bottom_line_id"),
-                      document.getElementById("message_corner_line_id"));
-    // Listener на кнопку Ok
-    closeButton.addEventListener("click", () => {
-      message_dialog.close()
-    });
-
-    // Показать сообщение
-    if (message_type != null) { // Заголовок диалога
-        if (message_type == 'Error')
-            message_dialog_title.innerHTML = 'Ошибка'
-        else
-            message_dialog_title.innerHTML = 'Сообщение'
-
-        message_dialog.showModal();
-        document.activeElement.blur(); // Убирает фокус на кнопке Close
-
-        console.log('delete cookie key showMessage');
-        document.cookie = 'showMessage=; Max-Age=-1;'; // delete cookie key
-    }
-}
-
+show_msg(message_type, "");
 
 /*
 *  Показать сообщения по записи отработанного времени
