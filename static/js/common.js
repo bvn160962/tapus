@@ -1,39 +1,51 @@
 ﻿/*
-* Перекодировка строки для текста с кириллицей в куке
-* Используется кодировка в виде: \108\206... (похожа на raw-unicode-escape)
-* Пока не работает!!!
-*/
-function buffer_to_string (buffer) {
-// result.decode('unicode-escape').encode('raw-unicode-escape')
-    const decoder = new TextDecoder('unicode-escape');
-    str = buffer.substr(1, buffer.length - 2)
-
-//    let bu = new ArrayBuffer(4);
-//    let view = new Uint8Array(bu);
-//    view[0] = 206;
-//    view[1] = 207;
-//    view[2] = 208;
-//    view[3] = 209;
-//    const text = decoder.decode(bu);
-//    console.log('bu: ' + text)
-//    return text;
-
-
-    const arrayBuffer = new TextEncoder().encode(str);
-    console.log('arrayBuffer: ' + arrayBuffer)
-
-
-    return decoder.decode(arrayBuffer);
-}
-
-
-/*
 * Не реагировать на нажатие Enter (в узлах input и других)
 */
 function skip_enter(event) {
     if(event.keyCode==13) {
         return false;
     }
+}
+
+
+/*
+* Показать модальное окно с сообщением
+*/
+function show_msg(p_msg_type, p_msg_text) {
+    if (message_dialog != null) {
+        // Перемещение диалога за заголовок - функция в common.js
+        reg_move_dialog(message_dialog, document.getElementById("message_dialog_header_id"));
+
+        // Изменение размера окна диалога - функция в common.js
+        reg_resize_dialog(message_dialog,
+                          document.getElementById("message_right_line_id"),
+                          document.getElementById("message_bottom_line_id"),
+                          document.getElementById("message_corner_line_id"));
+        // Listener на кнопку Ok
+        closeButton.addEventListener("click", () => {
+          message_dialog.close()
+        });
+
+        // Показать сообщение
+        if (p_msg_type != null) { // Заголовок диалога
+            if (p_msg_type == 'Error')
+                message_dialog_title.innerHTML = 'Ошибка';
+            else
+                message_dialog_title.innerHTML = 'Сообщение';
+
+            if (p_msg_text != "") { // Изменить текст сообщения
+                const msg_text = document.getElementById("message_dialog_text_id");
+                msg_text.innerHTML = p_msg_text;
+            }
+
+            message_dialog.showModal();
+            document.activeElement.blur(); // Убирает фокус на кнопке Close
+
+            console.log('delete cookie key showMessage');
+            document.cookie = 'showMessage=; Max-Age=-1;'; // delete cookie key
+        }
+    }
+
 }
 
 
@@ -278,5 +290,44 @@ function reg_resize_dialog(p_dialog, p_right, p_bottom, p_corner) {
             p_dialog.onmouseup = null;
         };
     }
+}
+
+
+/*
+* Перекодировка строки для текста с кириллицей в куке
+* Используется кодировка в виде: \108\206... (похожа на raw-unicode-escape)
+* Пока не работает!!!
+*/
+function buffer_to_string (buffer) {
+// result.decode('unicode-escape').encode('raw-unicode-escape')
+    const decoder = new TextDecoder('unicode-escape');
+    str = buffer.substr(1, buffer.length - 2)
+
+//    let bu = new ArrayBuffer(4);
+//    let view = new Uint8Array(bu);
+//    view[0] = 206;
+//    view[1] = 207;
+//    view[2] = 208;
+//    view[3] = 209;
+//    const text = decoder.decode(bu);
+//    console.log('bu: ' + text)
+//    return text;
+
+
+    const arrayBuffer = new TextEncoder().encode(str);
+    console.log('arrayBuffer: ' + arrayBuffer)
+
+
+    return decoder.decode(arrayBuffer);
+}
+
+
+// Вывести сообщение, содержащее текст в виде blob (b"\x02...")
+function print_blob(blob_msg, text, status) {
+    var reader = new FileReader();
+    reader.onload = (e) => { // Преобразовать blob в строку
+        console.log(text + e.target.result + status)
+    };
+    reader.readAsText(blob_msg);
 }
 

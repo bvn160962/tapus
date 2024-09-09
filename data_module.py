@@ -422,9 +422,14 @@ def where_user_refs(usr_id):
     return obj_list
 
 
+# Обновить изображение пользователя в БД
 def update_user_image(user_id, image):
-    users = pg_module.Users()
-    users.add_user_image(user_id, image)
+    pg_module.Users.add_user_image(user_id, image)
+
+
+# Получить изображение пользователя из БД
+def get_user_image(user_id):
+    return pg_module.Users.get_user_image(user_id)
 
 
 # PROJECTS

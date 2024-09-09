@@ -68,6 +68,7 @@ CONFIRMATION_BOUNDARY_BOX = (CONFIRMATION_BOTTOM_LINE_ID, CONFIRMATION_RIGHT_LIN
 # Показывать сообщение в виде модального окна
 USE_MESSAGE_DIALOG = True
 MESSAGE_DIALOG_ID = 'message_dialog_id'
+MESSAGE_DIALOG_TEXT_ID = 'message_dialog_text_id'
 MESSAGE_DIALOG_TITLE_ID = 'message_dialog_title_id'
 MESSAGE_DIALOG_HEADER_ID = 'message_dialog_header_id'
 MESSAGE_DIALOG_CLOSE_BUTTON_ID = 'message_dialog_ok_btn_id'
@@ -340,4 +341,5 @@ MAX_STR_LENGTH_FOR_NOTIFICATION = 30
 WIDTH_NOTIFICATION_BUTTON = 270
 
 # Загрузка изображения для пользователя
-IMG_TAG_ID = 'img_tag_id'
+IMG_TAG_ID = 'imgtagid'
+IMG_TAG_NAME = 'img_tag_name'

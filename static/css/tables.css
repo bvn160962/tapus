@@ -54,3 +54,11 @@ table {
     border-right: 0px solid gray;
 }
 
+
+/* Ячейка фиксированной высоты
+*/
+.td-fixed-height {
+  height: 10px;
+  line-height: 10px;
+}
+
