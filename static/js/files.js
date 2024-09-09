@@ -92,15 +92,13 @@ function load_image() {
                 }
                 else {
                     // Вывод сообщения через Reader:
-                    console.log("1");
-                    print_blob(rq.response, "2 Загрузка изображения: ", " (" + rq.status +")")
-                    console.log("3")
+//                    print_blob(rq.response, "Загрузка изображения: ", " (" + rq.status +")")
                     // Вывод сообщения через Promise:
                     //* rq.response - blob
                     //* rq.response.text() - Promise
                     //* rq.response.text().then - метод Promise - успешное завершение (есть еще методы catch и finally)
                     rq.response.text().then((txt, s=rq.status)  => { // Перевод blob в строку (через Promise)
-                        console.log("4 Загрузка изображения: " + txt + " (" + s +")");
+                        console.log("Загрузка изображения: " + txt + " (" + s +")");
                     });
 
                     img_tag.src = "/static/img/no_image.png";
