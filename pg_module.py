@@ -14,8 +14,8 @@ DB_CONNECT = None
 if util.IS_WINDOWS:
     # PG_HOST = '192.168.62.79'  # VM office (Bridge)
     # PG_HOST = '192.168.1.219'  # VM home (Bridge)
-    PG_HOST = '192.168.225.150'  # VM country (NAT)
-    # PG_HOST = '127.0.0.1'    # Docker Desktop
+    # PG_HOST = '192.168.225.150'  # VM country (NAT)
+    PG_HOST = '127.0.0.1'    # Docker Desktop
 else:
     PG_HOST = 'localhost'      # Cloud
 
@@ -767,7 +767,7 @@ class Messages:
                           f'{settings.F_TSH_ID} '\
                           f'From ts_messages, ts_users, ts_entries '\
                           f'Where {settings.F_MSG_FROM_USER} = %s '\
-                          f'And {settings.F_MSG_FROM_USER} = {settings.F_USR_ID} '\
+                          f'And {settings.F_MSG_TO_USER} = {settings.F_USR_ID} '\
                           f'And {settings.F_MSG_TIMESHEET} = {settings.F_TSH_ID} '\
                           f'Order by {settings.F_MSG_TIMESTAMP}, {settings.F_MSG_ID}'
 

@@ -1960,6 +1960,7 @@ def add_notifications(module, obj_id='', page='notifications'):
 
             # Список сообщений(кнопки)
             msgs = data_module.get_to_me_messages(app.get_c_prop(settings.C_USER_ID))
+            util.log_tmp(f'MSGS-->{msgs}')
             # msgs = data_module.get_my_messages(app.get_c_prop(settings.C_USER_ID))
 
         elif page == 'outbox':
@@ -2011,6 +2012,7 @@ def add_notifications(module, obj_id='', page='notifications'):
         rend_2_col = False
 
         for m in msgs:
+            util.log_tmp(f'смотрим m-->{m}')
             m_tsh_id = str(getattr(m, settings.F_TSH_ID))
             m_msg_id = str(getattr(m, settings.F_MSG_ID))
             cnt += 1
@@ -2021,7 +2023,7 @@ def add_notifications(module, obj_id='', page='notifications'):
                                            {
                                                'style': f'white-space: pre-wrap; width: {settings.WIDTH_NOTIFICATION_BUTTON}px; border: 3px solid var(--def-color);',
                                                'type': 'submit',
-                                               'name': 'btn_msg',
+                                               'name': settings.NOTIFICATION_MESSAGE_BUTTON,
                                                'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
                                                'class': 'btn-msg'})
             else:
@@ -2032,9 +2034,14 @@ def add_notifications(module, obj_id='', page='notifications'):
                                                'name': 'btn_msg',
                                                'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
                                                'class': 'btn-msg'})
-            msg_button.text = (
-                f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
-                f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
+            if page == 'notifications':
+                msg_button.text = (
+                    f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
+                    f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
+            elif page == 'outbox':
+                msg_button.text = (
+                    f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
+                    f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
 
             if cnt == 1:
                 if obj_id != '':
@@ -2072,11 +2079,13 @@ def add_notifications(module, obj_id='', page='notifications'):
                         msg_info = et.SubElement(col_2, 'label')
                         msg_info.text = f'{f[2]}'
 
-                del_conf_btn = et.SubElement(col2, 'button',
-                                             {
-                                                 'name': settings.NOTIFICATIONS_DELETE_BUTTON,
-                                                 'value': f'{msg_id}'})
-                del_conf_btn.text = 'Удалить уведомление'
+                ## пока решили не использовать кнопку 'Удалить уведомление'
+                #
+                # del_conf_btn = et.SubElement(col2, 'button',
+                #                              {
+                #                                  'name': settings.NOTIFICATIONS_DELETE_BUTTON,
+                #                                  'value': f'{msg_id}'})
+                # del_conf_btn.text = 'Удалить уведомление'
 
         return base_html.get_html()
 
