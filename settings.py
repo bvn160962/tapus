@@ -338,7 +338,7 @@ REJECT_BUTTON = 'del_btn'
 ALL_FLAG_BUTTON = 'all_flag_btn'
 
 MAX_STR_LENGTH_FOR_NOTIFICATION = 30
-WIDTH_NOTIFICATION_BUTTON = 270
+WIDTH_NOTIFICATION_BUTTON = 250
 
 # Загрузка изображения для пользователя
 IMG_TAG_ID = 'imgtagid'
