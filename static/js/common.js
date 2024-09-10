@@ -322,11 +322,14 @@ function buffer_to_string (buffer) {
 }
 
 
-// Вывести сообщение, содержащее текст в виде blob (b"\x02...")
+/*
+* Вывести сообщение, содержащее текст в виде blob (b"\x02...")
+*/
 function print_blob(blob_msg, text, status) {
     var reader = new FileReader();
     reader.onload = (e) => { // Преобразовать blob в строку
-        console.log(text + e.target.result + status)
+        var s = e.target.result;
+        console.log(text + s + status);
     };
     reader.readAsText(blob_msg);
 }

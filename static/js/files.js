@@ -1,23 +1,52 @@
-/*
+﻿/*
 * Выбрать изображение
 */
+//async function select_img(img_tag) {
+//    data = await openFile();
+//    console.log(data);
+//}
+
+
 async function select_img(img_tag) {
 //    const img_tag = document.getElementById(img_tag_id_name); // Область отображения изображения
-    console.log('select_img: ' + img_tag);                  // Почему-то, иногда, передается сам тег, а не его имя ?!
+//    console.log('select_img: ' + img_tag);                  // Почему-то, иногда, передается сам тег, а не его имя ?!
 
     // Выбрать файл
-    [img_file] = await window.showOpenFilePicker();
-    data = await img_file.getFile();
-
+    if ('showOpenFilePicker' in window) { // Поддерживается File System Access API (не поддерживается в cloud)
+        data = await openFileW();
+    } else {
+        data = await openFileI();
+    }
 
     img_tag.src = URL.createObjectURL(data); // Добавляем изображение
     img_tag.file = data;                     // Добавляем файл к тегу, для последующей выгрузки на сервер
     img_tag.onload = () => {                 // Удаляем объект после загрузки
-        // console.log('unload');
         URL.revokeObjectURL(img_tag.src);
     };
+}
 
-    console.log(data);
+/*
+* Выбрать файл изображения - window.showOpenFilePicker()
+*/
+async function openFileW() {
+    console.log("openFileW...");
+    [img_file] = await window.showOpenFilePicker();
+    return await img_file.getFile();
+}
+
+/*
+* Выбрать файл изображения - input type='file'
+*/
+const openFileI = () => {
+    console.log("openFileI...");
+    return new Promise((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.addEventListener('change', () => {
+            resolve(input.files[0]);
+        });
+        input.click();
+    });
 }
 
 
@@ -85,21 +114,21 @@ function load_image() {
             var request = new XMLHttpRequest();
             request.open("GET", "/image_download/"+user_id);
             request.responseType = "blob"; // "arraybuffer" | "blob"
-            request.onload = function (e) {
+            request.onload = async function (e) {
                 const rq = e.target
                 if (rq.status == 200) { // Успешно сформировано изображение
                     img_tag.src = URL.createObjectURL(rq.response);
                 }
                 else {
                     // Вывод сообщения через Reader:
-//                    print_blob(rq.response, "Загрузка изображения: ", " (" + rq.status +")")
+                    print_blob(rq.response, "Загрузка изображения: ", " (" + rq.status +")")
                     // Вывод сообщения через Promise:
                     //* rq.response - blob
                     //* rq.response.text() - Promise
                     //* rq.response.text().then - метод Promise - успешное завершение (есть еще методы catch и finally)
-                    rq.response.text().then((txt, s=rq.status)  => { // Перевод blob в строку (через Promise)
-                        console.log("Загрузка изображения: " + txt + " (" + s +")");
-                    });
+//                    await rq.response.text().then((txt, s=rq.status)  => { // Перевод blob в строку (через Promise)
+//                        console.log("Загрузка изображения: " + txt + " (" + s +")");
+//                    });
 
                     img_tag.src = "/static/img/no_image.png";
                 }

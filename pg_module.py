@@ -13,9 +13,9 @@ DB_CONNECT = None
 
 if util.IS_WINDOWS:
     # PG_HOST = '192.168.62.79'  # VM office (Bridge)
-    # PG_HOST = '192.168.1.219'  # VM home (Bridge)
-    # PG_HOST = '192.168.225.150'  # VM country (NAT)
-    PG_HOST = '127.0.0.1'    # Docker Desktop
+    # PG_HOST = '192.168.1.219'  # VM (Bridge)
+    PG_HOST = '192.168.225.150'  # VM home, office, country (NAT)
+    # PG_HOST = '127.0.0.1'    # Docker Desktop
 else:
     PG_HOST = 'localhost'      # Cloud
 
@@ -955,8 +955,8 @@ if __name__ == '__main__':
         # out.close()
 
         util.log_tmp("qweйцу")
-        util.log_tmp(f'{bytes("qweйцу".encode("1251"))}')
-        util.log_tmp(f'{bytes("qweйцу".encode("utf-8"))}')
+        # util.log_tmp(f'{"qwйцу".encode("1251")}')
+        # util.log_tmp(f'{"qwйцу".encode()}')
 
         # a('1', a='2', b=3)
         # a(
