@@ -70,7 +70,7 @@ select {
 */
 .center_frame {
     text-align: center;
-    font-family: Arial;
+    /*font-family: Arial;*/
     /*border: 8px #CCCCCC ridge;*/
     border: 10px solid rgba(95, 95, 95, .3);
     border-radius: 3px;

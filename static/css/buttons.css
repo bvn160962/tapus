@@ -142,5 +142,7 @@ button {
     border: transparent;
 /*    width: 30%;
     height: 30px;*/
+    font-family: Times New Roman;
+    font-weight: normal;
     text-align: left;
 }

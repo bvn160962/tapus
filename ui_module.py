@@ -1936,24 +1936,28 @@ def add_notifications(module, obj_id='', page='notifications'):
         # Переключение режимов Уведомления/ Чаты
         if page == 'notifications':
             confirmation_btn = et.SubElement(p, 'button',
-                                             {'style': 'width: 150;'
+                                             {'style': 'width: 100;'
+                                                       'font-family: Times New Roman;'
                                                        'background-color: transparent;'
-                                                       'border: 0px solid var(--def-color);'
-                                                       'font-weight: 900;'
-                                                       'text-decoration: underline',
+                                                       'border: 2px solid var(--def-color);'
+                                                       'font-weight: bold',
                                               'type': 'submit',
                                               'name': f'{settings.NOTIFICATION_BUTTON}'})
             confirmation_btn.text = 'Уведомления'
             confirmation_btn = et.SubElement(p, 'button',
-                                             {'style': 'width: 150;'
+                                             {'style': 'width: 100;'
+                                                       'font-family: Times New Roman;'
+                                                       'font-weight: normal;'
                                                        'background-color: transparent;'
-                                                       'border: 0px solid var(--def-color);',
+                                                       'border: 1px solid var(--def-color);',
                                               'type': 'submit',
                                               'name': f'{settings.NOTIFICATION_OUTBOX_BUTTON}'})
             confirmation_btn.text = 'Исходящие'
-            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
+            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 100;'
+                                                                    'font-family: Times New Roman;'
+                                                                    'font-weight: normal;'
                                                                     'background-color: transparent;'
-                                                                    'border: 0px solid',
+                                                                    'border: 1px solid',
                                                            'type': 'submit',
                                                            'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
             confirmation_btn.text = 'Чаты'
@@ -1965,24 +1969,28 @@ def add_notifications(module, obj_id='', page='notifications'):
 
         elif page == 'outbox':
             confirmation_btn = et.SubElement(p, 'button',
-                                             {'style': 'width: 150;'
+                                             {'style': 'width: 100;'
+                                                       'font-family: Times New Roman;'
+                                                       'font-weight: normal;'
                                                        'background-color: transparent;'
-                                                       'border: 0px solid var(--def-color);',
+                                                       'border: 1px solid var(--def-color);',
                                               'type': 'submit',
                                               'name': f'{settings.NOTIFICATION_BUTTON}'})
             confirmation_btn.text = 'Уведомления'
             confirmation_btn = et.SubElement(p, 'button',
-                                             {'style': 'width: 150;'
+                                             {'style': 'width: 100;'
+                                                       'font-family: Times New Roman;'
                                                        'background-color: transparent;'
-                                                       'border: 0px solid var(--def-color);'
-                                                       'font-weight: 900;'
-                                                       'text-decoration: underline',
+                                                       'border: 2px solid var(--def-color);'
+                                                       'font-weight: bold',
                                               'type': 'submit',
                                               'name': f'{settings.NOTIFICATION_OUTBOX_BUTTON}'})
             confirmation_btn.text = 'Исходящие'
-            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 50;'
+            confirmation_btn = et.SubElement(p, 'button', {'style': 'width: 100;'
+                                                                    'font-family: Times New Roman;'
+                                                                    'font-weight: normal;'
                                                                     'background-color: transparent;'
-                                                                    'border: 0px solid',
+                                                                    'border: 1px solid',
                                                            'type': 'submit',
                                                            'name': f'{settings.NOTIFICATION_CHARTS_BUTTON}'})
             confirmation_btn.text = 'Чаты'
@@ -2019,6 +2027,8 @@ def add_notifications(module, obj_id='', page='notifications'):
             row1 = et.SubElement(table, 'tr')
             col1 = et.SubElement(row1, 'td', {'style': f'background-color: {get_row_color(cnt)}'})
             if obj_id == m_tsh_id and msg_id == m_msg_id:
+                if getattr(m, settings.F_MSG_IS_READ) == False:
+                    data_module.set_read_message(msg_id)
                 msg_button = et.SubElement(col1, 'button',
                                            {
                                                'style': f'white-space: pre-wrap; width: {settings.WIDTH_NOTIFICATION_BUTTON}px; border: 3px solid var(--def-color);',
@@ -2027,21 +2037,29 @@ def add_notifications(module, obj_id='', page='notifications'):
                                                'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
                                                'class': 'btn-msg'})
             else:
-                msg_button = et.SubElement(col1, 'button',
-                                           {
-                                               'style': f'white-space: pre-wrap; width: {settings.WIDTH_NOTIFICATION_BUTTON}px;',
-                                               'type': 'submit',
-                                               'name': 'btn_msg',
-                                               'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
-                                               'class': 'btn-msg'})
-            if page == 'notifications':
-                msg_button.text = (
-                    f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
-                    f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
-            elif page == 'outbox':
-                msg_button.text = (
-                    f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
-                    f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
+                if getattr(m, settings.F_MSG_IS_READ) == False:
+                    msg_button = et.SubElement(col1, 'button',
+                                               {
+                                                   'style': f'white-space: pre-wrap;'
+                                                            f'width: {settings.WIDTH_NOTIFICATION_BUTTON}px;'
+                                                            f'font-weight: bold',
+                                                   'type': 'submit',
+                                                   'name': 'btn_msg',
+                                                   'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
+                                                   'class': 'btn-msg'})
+                elif getattr(m, settings.F_MSG_IS_READ) == True:
+                    msg_button = et.SubElement(col1, 'button',
+                                               {
+                                                   'style': f'white-space: pre-wrap;'
+                                                            f'width: {settings.WIDTH_NOTIFICATION_BUTTON}px;',
+                                                   'type': 'submit',
+                                                   'name': 'btn_msg',
+                                                   'value': f'{getattr(m, settings.F_TSH_ID)}{settings.SPLITTER}{getattr(m, settings.F_MSG_ID)}',
+                                                   'class': 'btn-msg'})
+
+            msg_button.text = (
+                f'{util.get_str_from_user_and_date(getattr(m, settings.F_USR_NAME), getattr(m, settings.F_MSG_CREATION_DATE))}\n'
+                f'{util.str_cutter(getattr(m, settings.F_MSG_TEXT))}')
 
             if cnt == 1:
                 if obj_id != '':
